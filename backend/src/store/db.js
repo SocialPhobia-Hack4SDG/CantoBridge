@@ -17,6 +17,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { randomBytes } from 'node:crypto';
 
 import { createAccountRows, createSeed, newAccountId } from './seed.js';
 import { MAX_INTERESTS, ROLES } from '../data/vocabularies.js';
@@ -103,7 +104,7 @@ export function createDb({ filePath = null, now = () => Date.now() } = {}) {
     },
     /* ---------- 账号与令牌 ---------- */
     createSession({ userId, role, ttlMs = TOKEN_TTL_MS }) {
-      const token = 'demo-' + Math.random().toString(36).slice(2, 10) + now().toString(36).slice(-4);
+      const token = 'demo-' + randomBytes(32).toString('hex');
       const session = {
         token,
         userId,
@@ -112,7 +113,7 @@ export function createDb({ filePath = null, now = () => Date.now() } = {}) {
         createdAt: new Date(now()).toISOString(),
         expiresAt: new Date(now() + ttlMs).toISOString(),
       };
-      tables.sessions = [...tables.sessions.filter((item) => item.token !== token), session];
+      tables.sessions = [...tables.sessions.filter((item) => item.token !== token && Date.parse(item.expiresAt) > now()), session];
       persist();
       return session;
     },

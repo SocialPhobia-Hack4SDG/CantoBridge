@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: cantobridge
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --prefix backend
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: CANTOBRIDGE_MAX_ACCOUNTS
+        value: "50"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: CLOUDFLARE_TURN_KEY_ID
+        sync: false
+      - key: CLOUDFLARE_TURN_API_TOKEN
+        sync: false
+      - key: CANTOBRIDGE_INVITE_CODE
+        generateValue: true

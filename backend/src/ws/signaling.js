@@ -21,6 +21,7 @@
 import { WebSocketServer } from 'ws';
 
 import { isAllowedOrigin } from '../http/cors.js';
+import { isRoomParticipant } from '../domain/roomAccess.js';
 import { availableBuddiesFor, waitingLearnersFor } from '../domain/match.js';
 import {
   MATCH_CHANNEL,
@@ -154,6 +155,10 @@ export function attachSignaling({ server, db, hub, corsOrigins = [], now = () =>
   }
 
   function handleClientMessage(client, raw) {
+    if (!db.getSession(client.token)) { client.disconnect(4001, 'session expired'); return; }
+    const current = now();
+    if (current - client.windowStart >= 60_000) { client.windowStart = current; client.messageCount = 0; }
+    if (++client.messageCount > 2000) { client.disconnect(4008, 'message rate exceeded'); return; }
     const allowed = client.kind === 'match' ? MATCH_UPSTREAM : ROOM_RELAY;
     const parsed = parseClientMessage(raw, allowed);
     if (!parsed.ok) {
@@ -184,8 +189,13 @@ export function attachSignaling({ server, db, hub, corsOrigins = [], now = () =>
       roomId,
       userId: session.userId,
       role: session.role,
+      token: session.token,
+      windowStart: now(),
+      messageCount: 0,
+      disconnect(code, reason) { ws.close(code, reason); },
       send(message) {
         if (ws.readyState !== ws.OPEN) return false;
+        if (ws.bufferedAmount > 256 * 1024) { ws.terminate(); return false; }
         try {
           ws.send(JSON.stringify(message));
           return true;
@@ -199,6 +209,8 @@ export function attachSignaling({ server, db, hub, corsOrigins = [], now = () =>
 
     const detach = hub.register(channel, client);
     sockets.add(ws);
+    ws.alive = true;
+    ws.on('pong', () => { ws.alive = true; });
 
     if (kind === 'room') {
       // 广播本身就会发给刚进来的这个人，不用单独再发一遍
@@ -248,9 +260,16 @@ export function attachSignaling({ server, db, hub, corsOrigins = [], now = () =>
     if (parsed.kind === 'room' && !db.getRoom(parsed.roomId)) {
       return rejectHandshake(socket, 404, 'room_gone', 'room not found: ' + parsed.roomId);
     }
+    if (parsed.kind === 'room' && !isRoomParticipant(db, db.getRoom(parsed.roomId), session.userId)) {
+      return rejectHandshake(socket, 403, 'forbidden', 'not a room participant');
+    }
+    if (sockets.size >= 200) return rejectHandshake(socket, 429, 'rate_limited', 'connection limit exceeded');
+    let ownedConnections = 0;
+    for (const client of wss.clients) if (client.accountId === session.userId) ownedConnections++;
+    if (ownedConnections >= 8) return rejectHandshake(socket, 429, 'rate_limited', 'account connection limit exceeded');
 
     const context = { ...parsed, session };
-    wss.handleUpgrade(request, socket, head, (ws) => wss.emit('connection', ws, request, context));
+    wss.handleUpgrade(request, socket, head, (ws) => { ws.accountId = session.userId; wss.emit('connection', ws, request, context); });
     return null;
   }
 
@@ -278,10 +297,19 @@ export function attachSignaling({ server, db, hub, corsOrigins = [], now = () =>
     }
   });
 
+  const heartbeat = setInterval(() => {
+    for (const ws of sockets) {
+      if (!ws.alive) { ws.terminate(); continue; }
+      ws.alive = false;
+      ws.ping();
+    }
+  }, 30_000).unref();
+
   return {
     wss,
     channels: () => hub.channels(),
     close() {
+      clearInterval(heartbeat);
       for (const socket of sockets) {
         try {
           socket.terminate();

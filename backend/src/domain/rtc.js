@@ -26,11 +26,13 @@ export function createRtcHandlers({
   stunUrls = DEFAULT_STUN_URLS,
   turn = null,
   ttlSec = DEFAULT_TTL_SEC,
+  iceProvider = null,
 } = {}) {
   return {
     /** GET /api/rtc/ice-servers —— 进房协商前拉一次。 */
     async iceServers(ctx) {
-      requireSession(ctx.req, db);
+      const session = requireSession(ctx.req, db);
+      if (iceProvider) return { data: await iceProvider(session) };
 
       const iceServers = [];
       const urls = (stunUrls ?? []).filter(Boolean);

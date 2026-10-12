@@ -11,6 +11,7 @@
 
 import { ApiError } from '../http/envelope.js';
 import { requireSession } from '../http/auth.js';
+import { requireRoomParticipant } from './roomAccess.js';
 import { BUDDY_FEEDBACK_TAGS, LEARNER_FEEDBACK_TAGS } from '../data/vocabularies.js';
 import {
   LEARNER_WANT_TO_LEARN,
@@ -316,8 +317,8 @@ export function createRoomHandlers({ db, now = () => Date.now(), events = null }
      * 用真随机的话这条就断了 —— 两侧各拿一叠不同的卡，对方翻到的那张在本机根本找不到。
      */
     async getCards(ctx) {
-      requireSession(ctx.req, db);
-      const room = requireRoom(ctx, db);
+      const session = requireSession(ctx.req, db);
+      const room = requireRoomParticipant(db, requireRoom(ctx, db), session.userId);
       const peerRow = db.findQueueRow(room.peerUserId);
       const learnerSide = learnerSideOf(room, peerRow);
 
@@ -496,9 +497,9 @@ export function createRoomHandlers({ db, now = () => Date.now(), events = null }
     /** GET /api/rooms/:roomId —— Phase 3 才做，这里先把「房间从哪儿取」明确下来。 */
     async getRoom(ctx) {
       const session = requireSession(ctx.req, db);
-      void session;
       const room = db.getRoom(ctx.params.roomId);
       if (!room) throw new ApiError('room_gone', 'room not found: ' + ctx.params.roomId);
+      requireRoomParticipant(db, room, session.userId);
       const row = db.findQueueRow(room.peerUserId);
       return {
         data: {

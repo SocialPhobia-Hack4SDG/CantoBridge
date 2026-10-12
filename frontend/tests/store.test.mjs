@@ -72,7 +72,7 @@ test('设备 id：落盘一次终身复用，资料 id 由它派生（与后端 
   const storage = createMemoryStorage();
   const first = createStore({ storage });
   const deviceId = first.deviceId();
-  assert.match(deviceId, /^d-[a-z0-9]{8}$/);
+  assert.match(deviceId, /^d-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   assert.equal(storage.getItem(DEVICE_KEY), deviceId, '设备 id 落在独立键里');
 
   // 换一个 store 实例（≈ 刷新页面）还是同一个设备、同一个账号

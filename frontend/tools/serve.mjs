@@ -126,12 +126,15 @@ async function serveCertDownload(response, certDir) {
   }
 }
 
-async function serveStatic(request, response, root, { certDir = CERT_DIR } = {}) {
+async function serveStatic(request, response, root, { certDir = CERT_DIR, publicOnly = false } = {}) {
   const target = resolveRequestPath(request.url ?? '/', root);
+  const relative = target?.slice(root.length).split(sep).filter(Boolean) ?? [];
+  const hidden = relative.some(part => part.startsWith('.') || part === 'node_modules');
+  const publicPath = relative.length === 0 || relative.join('/') === 'index.html' || ['src', 'assets'].includes(relative[0]);
   // `.certs/` 整个目录不参与静态分发。它恰好落在 `frontend/` 这棵静态树里，
   // 而里面有私钥——不拦就等于把私钥发给同网段的任何人（会场 Wi-Fi 上尤其难看）。
   // 证书本身有 `/cert.crt` 这个专门入口，不需要从文件树里摸。
-  if (target === null || isInsideDir(target, certDir)) {
+  if (target === null || isInsideDir(target, certDir) || hidden || (publicOnly && !publicPath)) {
     response.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
     response.end('forbidden');
     return;
@@ -245,9 +248,10 @@ export function proxyUpgrade(request, socket, head, backendOrigin) {
  * 证书下载排在最前面：它必须抢在「找不到文件就回退 index.html」之前，
  * 否则 `/cert.crt` 会被当成哈希路由、返回一个 HTML 页面。
  */
-export function createRequestHandler({ root = ROOT, backendOrigin = null, certDir = CERT_DIR } = {}) {
+export function createRequestHandler({ root = ROOT, backendOrigin = null, certDir = CERT_DIR, publicOnly = false } = {}) {
   return function handleRequest(request, response) {
     if (isCertDownloadPath(request.url)) {
+      if (publicOnly) { response.writeHead(404); response.end('not found'); return; }
       void serveCertDownload(response, certDir);
       return;
     }
@@ -255,7 +259,7 @@ export function createRequestHandler({ root = ROOT, backendOrigin = null, certDi
       proxyHttp(request, response, backendOrigin);
       return;
     }
-    void serveStatic(request, response, root, { certDir });
+    void serveStatic(request, response, root, { certDir, publicOnly });
   };
 }
 

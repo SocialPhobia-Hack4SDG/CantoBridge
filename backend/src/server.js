@@ -50,17 +50,23 @@ export function createServer({
   devRoutes = true,
   turn = null,
   stunUrls = undefined,
+  iceProvider = null,
+  runRequest = null,
+  requestPolicy = null,
+  exposeErrors = true,
 } = {}) {
   const router = createRouter();
   const idempotency = createIdempotency({ now });
   // 连接登记簿 + 领域层 → 信令层的桥；两者都要先建好，下面才能注入给各 handler
   const hub = createHub();
   const bus = createEventBridge({ db, hub });
-  const account = createAccountHandlers({ db, events: bus.emit });
+  let pendingEvents = null;
+  const emit = (type, payload) => pendingEvents ? pendingEvents.push([type, payload]) : bus.emit(type, payload);
+  const account = createAccountHandlers({ db, events: emit });
   const dictionary = createDictionaryHandlers();
-  const match = createMatchHandlers({ db, now, events: bus.emit });
-  const rooms = createRoomHandlers({ db, now, events: bus.emit });
-  const rtc = createRtcHandlers({ db, now, turn, ...(stunUrls ? { stunUrls } : {}) });
+  const match = createMatchHandlers({ db, now, events: emit });
+  const rooms = createRoomHandlers({ db, now, events: emit });
+  const rtc = createRtcHandlers({ db, now, turn, iceProvider, ...(stunUrls ? { stunUrls } : {}) });
   const social = createSocialHandlers({ db, now });
   const shop = createShopHandlers({ db });
   router.get('/api/me/shop', shop.get);
@@ -162,25 +168,35 @@ export function createServer({
 
       const requestId = typeof body?.requestId === 'string' && body.requestId.length > 0 ? body.requestId : null;
       const key = route.options.idempotent && requestId ? idempotency.keyFor(req, token, requestId) : null;
-      if (key) {
-        const replay = idempotency.get(key);
-        if (replay) {
-          sendJson(res, replay.status, replay.body, headers);
-          return;
+      // 云端串行执行、先持久化再回包；失败时不缓存成功结果、不广播未提交事件。
+      const execute = async () => {
+        requestPolicy?.({ req, body, path: url.pathname, token });
+        const replay = key ? idempotency.get(key) : null;
+        if (replay) return { replay };
+        const events = [];
+        if (runRequest) pendingEvents = events;
+        try {
+          const result = (await route.handler({ req, res, params, query: url.searchParams, body, db })) ?? {};
+          return { status: result.status ?? 200, payload: okBody(result.data ?? null), events };
+        } finally {
+          if (runRequest) pendingEvents = null;
         }
-      }
-
-      const result = (await route.handler({ req, res, params, query: url.searchParams, body, db })) ?? {};
-      const status = result.status ?? 200;
-      const payload = okBody(result.data ?? null);
-      if (key) idempotency.set(key, status, payload);
+      };
+      const committed = outcome => {
+        if (key && !outcome.replay) idempotency.set(key, outcome.status, outcome.payload);
+        for (const [type, data] of outcome.events ?? []) bus.emit(type, data);
+      };
+      const outcome = await (runRequest ? runRequest(execute, committed) : execute());
+      if (!runRequest) committed(outcome);
+      const status = outcome.replay?.status ?? outcome.status;
+      const payload = outcome.replay?.body ?? outcome.payload;
       sendJson(res, status, payload, headers);
     } catch (error) {
       if (error instanceof ApiError) {
         sendJson(res, error.status ?? statusForCode(error.code), errorBody(error.code, error.message), headers);
         return;
       }
-      const message = error instanceof Error ? error.message : String(error);
+      const message = exposeErrors ? (error instanceof Error ? error.message : String(error)) : 'service temporarily unavailable';
       sendJson(res, 500, errorBody('internal', message), headers);
     }
   }

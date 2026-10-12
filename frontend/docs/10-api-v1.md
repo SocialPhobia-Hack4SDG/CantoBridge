@@ -482,10 +482,10 @@ flowchart TD
 
 | 接口 | 方法 | 鉴权 | 幂等 | 请求字段 | 响应字段 | 错误码 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/api/rooms/:roomId` | GET | Bearer | 是 | 无 | `room`、`peer`、`status`、`startedAt` | 404 `room_gone` |
-| `/api/rooms/:roomId/cards` | GET | Bearer | 是 | `level`、`interests`、`count`、`round`、`exclude` | `roomId`、`level`、`round`、`cards` | 404 `room_gone` |
-| `/api/rooms/:roomId/end` | POST | Bearer | 是 | `durationSec`、`cardsUsed`、`topics`、`requestId` | `durationSec`、`cardsUsed`、`xpEarned`、`unlocked`、`topics` | 404 `room_gone` |
-| `/api/rooms/:roomId/feedback` | POST | Bearer | 是 | `tags`、`skipped`、`requestId` | `ok` | 400 `bad_request` |
+| `/api/rooms/:roomId` | GET | Bearer | 是 | 无 | `room`、`peer`、`status`、`startedAt` | 404 `room_gone`、403 `forbidden` |
+| `/api/rooms/:roomId/cards` | GET | Bearer | 是 | `level`、`interests`、`count`、`round`、`exclude` | `roomId`、`level`、`round`、`cards` | 404 `room_gone`、403 `forbidden` |
+| `/api/rooms/:roomId/end` | POST | Bearer | 是 | `durationSec`、`cardsUsed`、`topics`、`requestId` | `durationSec`、`cardsUsed`、`xpEarned`、`unlocked`、`topics` | 404 `room_gone`、403 `forbidden` |
+| `/api/rooms/:roomId/feedback` | POST | Bearer | 是 | `tags`、`skipped`、`requestId` | `ok` | 400 `bad_request`、403 `forbidden` |
 | `/api/me/saved-phrases` | POST | Bearer | 是 | `cantonese`、`mandarin`、`phrase`、`roomId`、`requestId` | `savedPhrase` | 400 `bad_request` |
 
 - 话题卡是 **Mock AI Service 的真实对应物**：后端先用本地卡池（472 张 = 13 个兴趣主题 × 4 档 × 8 张 + 7 个通用主题 × 4 档 × 2 张）+ 按 `level` 与 `interests` 选卡，接口形状与 AI 生成完全一样，只是 `cards` 的来源不同（见 07 的 Q-G21）。
@@ -911,9 +911,10 @@ flowchart TD
 - 地址：`ws(s)://<同一台后端>/ws/match` 与 `/ws/rooms/<roomId>`。与 REST **同端口、同一份令牌**。
 - 令牌走**查询串** `?token=<token>`：浏览器的 `WebSocket` 构造函数不允许自定义请求头，
   带不了 `Authorization`。服务端也认 `Authorization: Bearer`，方便 node / curl 客户端。
-- 服务端按 **Origin 白名单 → 频道存在 → 令牌有效 → 房间存在** 依次判，各回
+- 服务端按 **Origin 白名单 → 频道存在 → 令牌有效 → 房间存在 → 房间参与者** 依次判，各回
   `403 forbidden` / `404 not_found` / `401 not_authorized` / `404 room_gone`，响应体与 REST 同形状。
   **没有 `Origin` 的客户端放行**（浏览器一定带 Origin、伪造不了；带不了的只有非浏览器客户端，已被令牌拦一道）。
+- 房间 REST 与房间信令都只允许发起人和对方账号；第三个有效账号返回 403 `forbidden`。
 - 前端不需要做额外处理，但联调时要一起验。
 
 **降级顺序**（与 09 第 4.1 节的三级降级一致）：远端 WSS → 同浏览器 `BroadcastChannel` → 纯模拟（不发网络请求，界面完全一致）。

@@ -34,9 +34,13 @@ export const STORAGE_KEY = 'cantobridge:v4';
  */
 export const DEVICE_KEY = 'cantobridge:device';
 
-/** 本机设备 id：`d-` + 8 位 base36。账号的钥匙，落盘一次之后终身复用。 */
+/** 设备 id 是账号钥匙：新账号使用浏览器密码学随机值，旧账号继续复用。 */
 export function newDeviceId() {
-  return 'd-' + Math.random().toString(36).slice(2, 10).padEnd(8, '0');
+  if (globalThis.crypto?.randomUUID) return 'd-' + globalThis.crypto.randomUUID();
+  const bytes = new Uint8Array(24);
+  if (!globalThis.crypto?.getRandomValues) throw new Error('注册需要安全浏览器环境，请通过 HTTPS 打开');
+  globalThis.crypto.getRandomValues(bytes);
+  return 'd-' + Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
 }
 
 /**

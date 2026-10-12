@@ -1,0 +1,17 @@
+{
+  "name": "cantobridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node deploy/start.mjs",
+    "test": "npm --prefix backend test && npm --prefix frontend test && node --test tests/*.test.mjs",
+    "check": "npm --prefix backend run check && npm --prefix frontend run check"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.9"
+  }
+}

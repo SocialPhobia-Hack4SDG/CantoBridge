@@ -22,7 +22,7 @@ test('私人记忆、账号快照、证书、环境密钥和本地产物不会�
     'frontend/tools/.certs/server.key', 'backend/node_modules/ws/index.js',
     '.env', 'backend/.env.production', 'frontend/.env.local',
     'backend/credentials.pem', 'backend/credentials.key',
-    'frontend/debug.log', 'outputs/preview.png', '.DS_Store',
+    'frontend/debug.log', 'outputs/preview.png', '.DS_Store', 'node_modules/test/index.js',
   ]) assert.equal(ignored(path), true, path);
 });
 
