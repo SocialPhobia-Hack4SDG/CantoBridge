@@ -1,0 +1,22 @@
+{
+  "name": "cantobridge-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "CantoBridge 后端：零依赖 node:http + JSON 快照。Phase 0~4 REST 主线",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test \"tests/**/*.test.mjs\" \"tools/**/*.test.mjs\"",
+    "check": "node tools/check-contract.mjs",
+    "smoke": "node tools/smoke.mjs",
+    "smoke:ws": "node tools/smoke-ws.mjs",
+    "preflight:lan": "node tools/preflight-lan.mjs",
+    "rehearse:rtc": "node tools/rehearse-rtc.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}

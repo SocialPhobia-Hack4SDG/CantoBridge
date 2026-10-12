@@ -1,0 +1,26 @@
+# 打开 Word / Excel 文档时生成的临时锁文件，不要纳入版本管理
+~$*
+
+# 本地跑后端用的第二个工作区（git worktree），不要纳入版本管理
+.run/
+
+# macOS 目录元数据
+.DS_Store
+
+# serve.mjs 自动生成的自签证书（每台机器的局域网 IP 都不一样，不该共享）
+.certs/
+
+# AI 协作工具的工作记忆目录（含私人笔记，不要公开）
+.workbuddy-ai/
+
+# 本地密钥和环境配置；只允许提交不含真实凭证的示例
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+
+# 调试日志和临时预览产物
+*.log
+outputs/

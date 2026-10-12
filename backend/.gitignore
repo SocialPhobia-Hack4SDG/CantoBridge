@@ -1,0 +1,5 @@
+# 演示数据快照：每个环境自己生成，不进版本库
+.data/
+
+# 依赖（npm install 自己装，不进版本库）
+node_modules/

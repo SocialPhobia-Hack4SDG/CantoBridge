@@ -1,0 +1,164 @@
+/* 设计 Token：唯一真源见 docs/05-design-system.md 第 2 节。只放变量，不放样式。 */
+
+:root,
+[data-preview-theme] {
+  color-scheme: light;
+  --palette-blue-bg: #eef4fa;
+  --palette-blue-accent: #2563a6;
+  --palette-night-bg: #111827;
+  --palette-night-accent: #73b8ed;
+  --palette-eye-bg: #edf3e5;
+  --palette-eye-accent: #407047;
+  /* 主题调色板：两套配色各自的「底色 + 主色」。
+     下面 mint 这一组、文件末尾 warm 那一组都引用这里，主题切换器上的色点也读它，
+     因此色点显示的颜色必然等于切过去之后的真实颜色，不会两处漂移。 */
+  --palette-mint-bg: #f3f1e9;
+  --palette-mint-accent: #2d7b62;
+  --palette-warm-bg: #faf3e6;
+  --palette-warm-accent: #f97316;
+
+  /* 背景层级 */
+  --bg-base: var(--palette-mint-bg);
+  --bg-raised: #fffdf8;
+  --bg-sunken: #e8ece7;
+  --bg-overlay: rgba(243, 241, 233, 0.82);
+  --bg-accent-soft: #dfece5;
+
+  /* 主色（唯一强调色） */
+  --accent: var(--palette-mint-accent);
+  --accent-strong: #1e5a47;
+  --accent-soft: #dfece5;
+  /* 主色实心块上的文字色。亮橙底配白字只有 2.4:1，主题 2 必须换成深墨字 */
+  --on-accent: #ffffff;
+  --on-danger: #ffffff;
+
+  /* 文本与边框 */
+  --text-primary: #17382e;
+  --text-secondary: #65756f;
+  --text-muted: #5e6e64;
+  --border-subtle: rgba(34, 78, 63, 0.08);
+  --border-strong: rgba(34, 78, 63, 0.16);
+
+  /* 语义色 */
+  --success: #0e9f6e;
+  --warning: #b7791f;
+  --danger: #d64545;
+
+  /* 阴影 */
+  --shadow-card: 0 1px 2px rgba(33, 71, 57, 0.03), 0 8px 24px rgba(33, 71, 57, 0.04);
+  --shadow-raised: 0 2px 8px rgba(33, 71, 57, 0.06), 0 22px 54px rgba(33, 71, 57, 0.12);
+
+  /* 字号阶梯 */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 26px;
+  --text-3xl: 32px;
+
+  /* 间距 / 圆角 / 动效 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-card: 220ms;
+  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* 字体栈：全部用系统字体，不加载任何字体文件 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "PingFang HK",
+    "Noto Sans SC", "Noto Sans HK", "Microsoft JhengHei", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --frame-max: 430px;
+  --page-pad: 20px;
+}
+/* 主题 2 · 暖橙：米黄底 + 明橙色按钮。
+   只覆盖「随主题变」的变量；字号、间距、圆角、动效三套主题共用。
+   切换方式：<html data-theme="warm">，由 src/app/store.js 的 setTheme 驱动。 */
+:root[data-theme='warm'],
+[data-preview-theme='warm'] {
+  --bg-base: var(--palette-warm-bg);
+  --bg-raised: #fffdf7;
+  --bg-sunken: #f3e7d3;
+  --bg-overlay: rgba(250, 243, 230, 0.78);
+  --bg-accent-soft: #ffe8cc;
+
+  --accent: var(--palette-warm-accent);
+  --accent-strong: #9a4a08;
+  --accent-soft: #ffe8cc;
+  /* 深墨字配明橙：对比度 5.4:1；白字只有 2.4:1，不达标 */
+  --on-accent: #3a2100;
+
+  --text-primary: #2b2115;
+  --text-secondary: #6f5c46;
+  --text-muted: #78664f;
+  --border-subtle: rgba(90, 62, 20, 0.1);
+  --border-strong: rgba(90, 62, 20, 0.2);
+
+  --warning: #9a4a08;
+
+  --shadow-card: 0 1px 2px rgba(120, 84, 30, 0.03), 0 8px 24px rgba(120, 84, 30, 0.04);
+  --shadow-raised: 0 2px 6px rgba(120, 84, 30, 0.07), 0 16px 40px rgba(120, 84, 30, 0.12);
+}
+
+:root[data-theme='blue'],
+[data-preview-theme='blue'] {
+  --bg-base: var(--palette-blue-bg);
+  --bg-raised: #ffffff;
+  --bg-sunken: #e1eaf5;
+  --bg-overlay: rgba(238,244,250,.9);
+  --accent: var(--palette-blue-accent);
+  --accent-strong: #174875;
+  --accent-soft: #dfebf8;
+  --bg-accent-soft: #dfebf8;
+  --text-primary: #172c40;
+  --text-secondary: #4b6278;
+  --text-muted: #596f83;
+}
+:root[data-theme='eye'],
+[data-preview-theme='eye'] {
+  --bg-base: var(--palette-eye-bg);
+  --bg-raised: #f6faef;
+  --bg-sunken: #dfe9d4;
+  --bg-overlay: rgba(237,243,229,.9);
+  --accent: var(--palette-eye-accent);
+  --accent-strong: #2d5132;
+  --accent-soft: #dcebd4;
+  --bg-accent-soft: #dcebd4;
+  --text-primary: #233421;
+  --text-secondary: #50634a;
+  --text-muted: #5d7056;
+}
+:root[data-theme='night'],
+[data-preview-theme='night'] {
+  color-scheme: dark;
+  --bg-base: var(--palette-night-bg);
+  --bg-raised: #1f2937;
+  --bg-sunken: #0b1220;
+  --bg-overlay: rgba(17,24,39,.92);
+  --accent: var(--palette-night-accent);
+  --accent-strong: #a5d6fc;
+  --accent-soft: #233e55;
+  --bg-accent-soft: #233e55;
+  --on-accent: #0b1825;
+  --text-primary: #edf2f7;
+  --text-secondary: #b5c3d1;
+  --text-muted: #91a4b8;
+  --border-subtle: rgba(230,240,250,.12);
+  --border-strong: rgba(230,240,250,.28);
+  --warning: #edc078;
+  --danger: #ef8787;
+  --shadow-card: 0 4px 20px rgba(0,0,0,.25);
+  --shadow-raised: 0 12px 32px rgba(0,0,0,.4);
+}
