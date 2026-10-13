@@ -149,7 +149,7 @@ export const ChatRoomPage = definePage({
     const local = view.local ?? makeLocal([]);
     const room = view.data?.room ?? ctx.getState().runtime.room;
     const call = view.call;
-    const snapshot = call?.snapshot() ?? { mode: 'sim', status: 'connecting', muted: false, hasMic: true, peerLeft: false };
+    const snapshot = call?.snapshot() ?? { mode: ctx.allowSimulation === false ? 'remote' : 'sim', status: 'connecting', muted: false, hasMic: true, peerLeft: false };
     const statusLabel = ctx.demo ? t('demo.status') : t(roomStatusKey({ status: snapshot.status, mode: snapshot.mode, hasMic: snapshot.hasMic, peerLeft: local.peerLeft }));
     const elapsed = Math.max(0, Math.round((ctx.store.now() - (room?.startedAt ?? ctx.store.now())) / 1000));
     const deck = view.data?.deck ?? [];
@@ -295,6 +295,14 @@ export const ChatRoomPage = definePage({
               title: t('room.phraseHint'),
             }),
           ]),
+      !ctx.demo && call?.diagnostics ? h('details', { class: 'card field', open: local.diagnosticsOpen ? true : undefined, onToggle: event => { local.diagnosticsOpen = event.target.open; } },
+        h('summary', { text: t('room.check') }),
+        h('p', { class: 'muted-note', text: t('room.checkHint') }),
+        h('button', { class: 'btn btn-secondary', type: 'button', onClick: () => {
+          void call.diagnostics().then(report => { local.diagnosticsReport = JSON.stringify(report, null, 2); ctx.paint(); });
+        } }, t('room.checkRefresh')),
+        local.diagnosticsReport ? h('pre', { style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: '12px' }, text: local.diagnosticsReport }) : null,
+      ) : null,
       h(CallControls, {
         muted: snapshot.muted,
         speakerOn: snapshot.speakerOn !== false,
@@ -416,7 +424,8 @@ async function getSession(ctx, room) {
   if (existing) return existing;
   const session = createCallSession({
     roomId: room.roomId,
-    mode: ctx.getState().settings.signalMode,
+    mode: ctx.allowSimulation === false ? 'remote' : ctx.getState().settings.signalMode,
+    allowSimulation: ctx.allowSimulation !== false,
     win: ctx.win,
     // 远端档位要的两样东西：信令地址（`lib/signal.js` 解析）与握手令牌。
     // `local` / `sim` 档位拿不到也没关系，用不到就不会被读。
@@ -434,7 +443,7 @@ function attachSession(ctx) {
   const view = ctx.view;
   const call = view.call;
   if (!call || view.unsubscribe) return;
-  view.unsubscribe = call.subscribe((snapshot) => {
+  const onState = snapshot => {
     // 通话状态是这一页的主要内容（状态文案 / 「点一下开始通话」的警告 / 麦克风提示），
     // **变了就必须重绘**。以前只在「对方离开 / 降级」两条路上重绘，于是接通之后界面一直停在
     // 「正在建立连接……」，被自动播放策略挡下时那条警告也永远画不出来 —— 用户既不知道已经接通，
@@ -457,13 +466,15 @@ function attachSession(ctx) {
         FallbackBanner({
           tone: 'warning',
           message: ctx.t('room.degraded'),
-          actionLabel: ctx.t('room.simulated'),
-          onAction: () => void call.fallbackToSim().then(() => ctx.paint()),
+          actionLabel: ctx.t('room.reconnect'),
+          onAction: () => void call.retryConnection?.().then(() => ctx.paint()),
         }),
       );
     }
     if (!ctx.demo && snapshot.hasMic === false) ctx.setBanner(FallbackBanner({ tone: 'info', message: ctx.t('room.listenOnly') }));
-  });
+  };
+  view.unsubscribe = call.subscribe(onState);
+  onState(call.snapshot());
 
   // 「双方看同一张」的下行那半：对方翻到哪张，我这边就跟到哪张。
   // **绝不回推**（`visit` 只改本地，不调 `announceCard`），否则两边会来回弹成死循环。

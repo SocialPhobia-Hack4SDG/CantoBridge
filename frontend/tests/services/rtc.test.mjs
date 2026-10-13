@@ -121,11 +121,11 @@ test('createRemoteTransport：令牌走 ?token=，内部词汇与线上词汇互
   assert.equal(peers.length, 3, '房间结束也走「对方不在了」这条路径');
 
   harness.sockets[0].message({ type: 'error', error: { code: 'bad_request' } });
-  assert.deepEqual(statuses, ['error']);
+  assert.deepEqual(statuses, ['open', 'error']);
 
   transport.close();
   assert.equal(harness.sockets[0].closed, true);
-  assert.deepEqual(statuses, ['error', 'closed']);
+  assert.deepEqual(statuses, ['open', 'error', 'closed']);
 
   // 后到的一方（第一条 room:ready 就是 peerReady:true）不当发起方
   const latePeers = [];

@@ -37,7 +37,7 @@ const api = createApi({ store, useMock: options.useMock, baseUrl: options.baseUr
 if (globalThis.document) {
   // signalUrl 单独传给 app（而不是挂到 api 上）：api 的方法名集合要和 mock 严格一致，
   // 多挂一个属性就会被 tools/check-api.mjs 的「两个实现方法名逐个相等」判红。
-  const app = createApp({ store, api, signalUrl: options.signalUrl });
+  const app = createApp({ store, api, signalUrl: options.signalUrl, allowSimulation: options.useMock });
 
   // 现场用：控制台可直接改数据、看状态
   globalThis.__CANTOBRIDGE_DEV__ = options.useMock;

@@ -110,7 +110,7 @@ test('公网同源信令真实转发 SDP 和翻卡，TURN 入口仅限登录用�
     return ws;
   };
   const left = await connect(a.token); const right = await connect(b.token);
-  for (const message of [{ type: 'rtc:offer', sdp: { type: 'offer', sdp: 'test-sdp' } }, { type: 'room:card', cardId: 'test-card', index: 0, round: 0 }]) {
+  for (const message of [{ type: 'rtc:offer', sdp: { type: 'offer', sdp: 'test-sdp' } }, { type: 'rtc:retry' }, { type: 'room:card', cardId: 'test-card', index: 0, round: 0 }]) {
     const received = new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(Error('signal not received')), 2000);
       const handle = raw => { const value = JSON.parse(String(raw)); if (value.type === message.type) { clearTimeout(timeout); right.off('message', handle); resolve(value); } };

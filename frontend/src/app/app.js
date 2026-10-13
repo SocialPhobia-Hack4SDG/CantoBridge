@@ -29,6 +29,7 @@ export function createApp({
   store,
   api,
   signalUrl = null,
+  allowSimulation = signalUrl === null,
   doc = globalThis.document,
   win = globalThis.window,
   mountPoint = 'app',
@@ -349,6 +350,7 @@ export function createApp({
     const matched = router.match(path);
     const route = findRoute(matched.route.path);
     const isDemo = route.guard === 'room' && matched.params.roomId === 'demo-preview';
+    if (isDemo && !allowSimulation) { win.location.replace('#/match'); return; }
     if (isDemo && (store.getState().runtime.queue || store.getState().runtime.room)) {
       win.location.replace('#/match');
       return;
@@ -407,7 +409,9 @@ export function createApp({
       view,
       getState: () => activeStore.getState(),
       demo: isDemo,
+      allowSimulation: isDemo || allowSimulation,
       openDemoRoom: () => {
+        if (!allowSimulation) return;
         if (store.getState().runtime.queue || store.getState().runtime.room) return;
         demo = createDemoRoom(store.getState(), { now: store.now });
         navigate('/room/demo-preview');

@@ -2,6 +2,12 @@
 
 ## 最新进展 · 用户自行操作浏览器
 
+2026-10-13 语音调试：用户已通过邀请入口，并报告两台设备听不到声音、连接不稳定。代码中复现并修复授权期间丢失 SDP / ICE、ICE 早于远端描述到达、无 streams 音轨丢失播放等问题。真实通话禁用模拟兜底和演示房间，增加 ICE 重连与不含密钥的「通话检查」。此改动必须在 Render 手动部署后再用两台设备复测。用户尚未提供设备系统、浏览器及网络组合；不能宣称实际媒体链路已恢复。
+
+本轮属于 making it better：改善已经部署的真实通话。最终回归结果：后端 193、前端 582、根目录 38，共 813 项全部通过；文档与接口检查通过。移动浏览器的手势解锁也已覆盖异步上下文恢复场景。新增检查不收集或输出密码、密钥、SDP、IP 地址。
+
+固定访问地址由用户截图确认：[CantoBridge](https://cantobridge.onrender.com)。本轮不得操作浏览器，部署与检查步骤由用户执行。复测时双方允许麦克风、确认声音开关打开，打开「通话检查」并刷新，比较 signalState / turnServers / remoteTracks / connectionState / bytesSent / bytesReceived / audioBlocked。出现问题时只接收这份安全报告或脱敏日志，不索取 TURN 密码、Supabase key 或邀请码。
+
 - 用户已报告 Supabase 初始化 SQL 执行成功，并找到 Project URL 和服务端 Secret key；尚未由运行中的后端验证实际连接。
 - Cloudflare 要求绑定付款方式，用户拒绝，本次不再使用。
 - Metered 的 20 GB 免费档位也要求绑卡。用户选择可免绑卡开通的 500 MB Free Trial Global，并报告已找到 Username / Password。还需从 Show ICE Servers Array 取得实际 TURN 地址。

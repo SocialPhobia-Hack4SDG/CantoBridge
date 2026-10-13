@@ -18,7 +18,7 @@
  *     `room:ready { peerReady }`，离开时广播 `room:peer-left`。谁是发起方也由它决定
  *     （第一条 `room:ready` 的 `peerReady` 为 false = 我先到 = 我发起），不靠随机 id 比大小。
  *
- * 设计原则：任何一步失败都不抛到 UI，而是降级 + 设置 warning，让页面用 FallbackBanner 表达。
+ * 真实后端禁用模拟兜底，失败如实显示未接通；仅开发 mock 可使用模拟音量。
  */
 
 import { levelFromWaveform, simulatedLevel, smoothLevel } from '../lib/audio.js';
@@ -42,6 +42,7 @@ const REMOTE_UPSTREAM = {
   ice: 'rtc:ice',
   level: 'rtc:level',
   card: 'room:card',
+  retry: 'rtc:retry',
 };
 /** 线上词汇 → 内部词汇。 */
 const REMOTE_DOWNSTREAM = {
@@ -50,6 +51,7 @@ const REMOTE_DOWNSTREAM = {
   'rtc:ice': 'ice',
   'rtc:level': 'level',
   'room:card': 'card',
+  'rtc:retry': 'retry',
 };
 
 function normalizeMode(mode) {
@@ -127,6 +129,7 @@ export function createRemoteTransport({ win = globalThis, url = '', token = null
 
   socket.onopen = () => {
     open = true;
+    onStatus?.('open');
     while (queue.length > 0) write(queue.shift());
   };
   socket.onmessage = (event) => {
@@ -190,8 +193,10 @@ export function createCallSession({
   token = null,
   iceServers = null,
   loadIceServers = null,
+  allowSimulation = true,
 } = {}) {
-  const requested = normalizeMode(mode);
+  const normalized = normalizeMode(mode);
+  const requested = !allowSimulation && normalized === 'sim' ? 'remote' : normalized;
   const listeners = new Set();
   /** 话题卡同步的订阅者（与通话状态分开：翻卡不是通话状态，不该塞进 snapshot）。 */
   const cardListeners = new Set();
@@ -215,6 +220,29 @@ export function createCallSession({
   let unlockHandler = null;
   /** 连接还没建好时到达的「对方进来了 / 对方走了」，建好之后补处理。 */
   let pendingPeer = null;
+  let rtcReady = false;
+  let remoteDescriptionReady = false;
+  let signalWork = Promise.resolve();
+  let offerer = null;
+  const pendingSignals = [];
+  const pendingCandidates = [];
+  let remoteStream = null;
+  const info = { signalState: requested === 'remote' ? 'connecting' : requested, turnServers: 0,
+    iceConfig: 'pending', offersSent: 0, offersReceived: 0, answersReceived: 0,
+    candidatesReceived: 0, remoteTracks: 0, lastError: null, iceErrorCode: null };
+
+  function recordError(error, stage) {
+    info.lastError = stage + ':' + (error?.name ?? 'Error');
+  }
+
+  function queueSignal(message) {
+    if (!message || message.from === myId || stopped) return;
+    if (!rtcReady && ['hello', 'hello-ack', 'offer', 'answer', 'ice', 'retry'].includes(message.type)) {
+      if (pendingSignals.length < 256) pendingSignals.push(message);
+      return;
+    }
+    signalWork = signalWork.then(() => handleSignal(message));
+  }
 
   const raw = { self: 0, peer: 0 };
   let smoothed = { self: 0, peer: 0 };
@@ -255,6 +283,7 @@ export function createCallSession({
 
   /* ---------- 模式 1：模拟通话 ---------- */
   function startSim(reason) {
+    if (!allowSimulation) { patch({ status: 'degraded', warning: reason ?? 'simulation-disabled' }); return; }
     if (connectTimer) win.clearTimeout?.(connectTimer);
     connectTimer = win.setTimeout(() => {
       if (!stopped) patch({ status: 'live' });
@@ -272,6 +301,7 @@ export function createCallSession({
       }
     }
     stream = null;
+    remoteStream = null;
     try {
       audioContext?.close?.();
     } catch (error) {
@@ -301,7 +331,9 @@ export function createCallSession({
     if (!devices?.getUserMedia) return false;
     try {
       stream = await devices.getUserMedia({ audio: true, video: false });
-    } catch {
+      if (stopped) { stopMedia(); return false; }
+    } catch (error) {
+      recordError(error, 'microphone');
       return false;
     }
     try {
@@ -364,6 +396,7 @@ export function createCallSession({
     try {
       const element = new AudioCtor();
       element.autoplay = true;
+      element.playsInline = true;
       element.muted = !state.speakerOn;
       element.hidden = true;
       win.document?.body?.appendChild?.(element);
@@ -412,50 +445,61 @@ export function createCallSession({
 
   function playRemoteAudio() {
     const element = audioElement;
-    if (typeof element?.play !== 'function') return;
+    if (typeof element?.play !== 'function') return false;
     let result = null;
     try {
       result = element.play();
     } catch (error) {
-      void error;
-      result = null;
+      recordError(error, 'playback');
+      audioBlocked = true;
+      patch({ audioBlocked: true });
+      bindUnlockOnGesture();
+      return false;
     }
     // 老 iOS 的 `play()` 不返回 promise，只能靠 `paused` 判断，这里不强行断言
-    if (!result || typeof result.then !== 'function') return;
-    result.then(
+    if (!result || typeof result.then !== 'function') return element.paused !== true;
+    return result.then(
       () => {
+        if (stopped || element !== audioElement) return false;
         // 真的出声了：解锁监听可以摘了；被拒的标记也要如实收回
         detachUnlock();
-        if (!audioBlocked) return;
+        if (!audioBlocked) return true;
         audioBlocked = false;
         patch({ audioBlocked: false });
+        return true;
       },
       () => {
+        if (stopped || element !== audioElement) return false;
         // 被自动播放策略拒了：**记下来并等手势**，不再静默吞掉
-        if (audioBlocked) return;
+        if (audioBlocked) return false;
         audioBlocked = true;
         patch({ audioBlocked: true });
         bindUnlockOnGesture();
+        return false;
       },
     );
   }
 
-  /** 重新尝试出声：先恢复 `AudioContext`，再 `play()`。在手势里调它必然成功。 */
+  /** 在同一次手势中恢复上下文并播放；如果浏览器仍拒绝则保留明确提示。 */
   async function resumeAudio() {
+    let resumed;
     try {
-      if (audioContext?.state === 'suspended') await audioContext.resume?.();
+      if (audioContext?.state === 'suspended') resumed = audioContext.resume?.();
     } catch (error) {
       void error;
     }
-    playRemoteAudio();
-    return !audioBlocked;
+    // play() must happen inside the gesture, before waiting on AudioContext.
+    const played = playRemoteAudio();
+    try { await resumed; } catch { /* Playback can still work independently. */ }
+    return Boolean(await played);
   }
 
-  function attachRemoteAudio(remoteStream) {
+  function attachRemoteAudio(streamToPlay) {
+    if (stopped || !streamToPlay) return;
     const element = ensureAudioElement();
     if (!element) return;
     try {
-      element.srcObject = remoteStream;
+      element.srcObject = streamToPlay;
     } catch (error) {
       void error;
       return;
@@ -466,7 +510,7 @@ export function createCallSession({
 
   /* ---------- 信令传输 ---------- */
   function openTransport() {
-    const onMessage = (message) => void handleSignal(message);
+    const onMessage = queueSignal;
     if (requested === 'remote') {
       const remote = createRemoteTransport({
         win,
@@ -477,6 +521,7 @@ export function createCallSession({
         onStatus: onSignalStatus,
       });
       if (remote) return remote;
+      if (!allowSimulation) { patch({ warning: 'remote-signal-missing' }); return null; }
       // 远端档位拿不到地址（或浏览器不支持）：退到同浏览器双标签页，挂提示但不中断
       patch({ warning: 'remote-signal-missing' });
     }
@@ -486,6 +531,8 @@ export function createCallSession({
   function onSignalStatus(status) {
     // `transport` 已被置空 = 是我们自己主动收的，不是异常
     if (stopped || !transport) return;
+    info.signalState = status;
+    if (status === 'open') return;
     if (status === 'error') patch({ warning: 'remote-signal-failed' });
     else if (state.status !== 'ended') patch({ status: 'degraded' });
   }
@@ -503,9 +550,10 @@ export function createCallSession({
   function applyPeer(event) {
     if (!event || stopped) return;
     if (event.present) {
+      offerer = event.offerer;
       patch({ peerPresent: true });
       // 远端档位：谁是发起方由后端第一条 `room:ready` 决定（见 createRemoteTransport）
-      if (event.offerer) void makeOffer();
+      if (event.offerer) signalWork = signalWork.then(() => makeOffer());
       return;
     }
     patch({ peerLeft: true, status: 'ended', peerPresent: false });
@@ -516,29 +564,39 @@ export function createCallSession({
     return transport?.kind !== 'remote' && myId > peerFrom;
   }
 
-  async function makeOffer() {
-    if (!connection) return;
+  async function makeOffer(restart = false) {
+    const pc = connection;
+    if (!pc || stopped) return;
     try {
-      const offer = await connection.createOffer();
-      await connection.setLocalDescription(offer);
-      send({ type: 'offer', from: myId, sdp: connection.localDescription });
+      if (pc.signalingState === 'have-local-offer') {
+        send({ type: 'offer', from: myId, sdp: pc.localDescription }); return;
+      }
+      if (restart) remoteDescriptionReady = false;
+      const offer = await pc.createOffer(restart ? { iceRestart: true } : undefined);
+      if (stopped || pc !== connection) return;
+      await pc.setLocalDescription(offer);
+      if (stopped || pc !== connection) return;
+      info.offersSent++;
+      send({ type: 'offer', from: myId, sdp: pc.localDescription });
     } catch (error) {
-      void error;
+      recordError(error, 'offer');
+      if (!stopped) patch({ warning: 'rtc-negotiation-failed' });
     }
   }
 
   /** STUN / TURN 配置：注入的 > 现拉的 > 写死兜底。任何一步失败都不该让通话起不来。 */
   async function resolveIceServers() {
     const provided = normalizeIceServers(iceServers);
-    if (provided) return provided;
+    if (provided) { info.iceConfig = 'provided'; return provided; }
     if (typeof loadIceServers === 'function') {
       try {
         const fetched = normalizeIceServers(await loadIceServers());
-        if (fetched) return fetched;
+        if (fetched) { info.iceConfig = 'server'; return fetched; }
       } catch (error) {
-        void error;
+        recordError(error, 'ice-config');
       }
     }
+    info.iceConfig = 'stun-fallback';
     return DEFAULT_ICE_SERVERS;
   }
 
@@ -558,21 +616,39 @@ export function createCallSession({
     patch({ mode: transport.kind }); // 远端退到 local 时，界面如实反映实际档位
 
     patch({ hasMic: await startMedia() });
+    if (stopped) return false;
     if (!state.hasMic) patch({ warning: 'mic-unavailable' });
     // 从这一刻起就等用户手势：音轨到达之前的那一下点击同样要算数（见 bindUnlockOnGesture）
     bindUnlockOnGesture();
 
-    connection = new PeerConnection({ iceServers: await resolveIceServers() });
+    const servers = await resolveIceServers();
+    if (stopped) return false;
+    info.turnServers = servers.filter(server => (Array.isArray(server.urls) ? server.urls : [server.urls]).some(url => /^turns?:/.test(url ?? ''))).length;
+    try { connection = new PeerConnection({ iceServers: servers }); }
+    catch (error) { recordError(error, 'peer-connection'); startSim('webrtc-config-failed'); return false; }
     connection.onicecandidate = (event) => {
       if (event.candidate) send({ type: 'ice', from: myId, candidate: event.candidate });
     };
-    connection.ontrack = (event) => attachRemoteAudio(event.streams?.[0]);
+    connection.ontrack = (event) => {
+      if (stopped) return;
+      info.remoteTracks++;
+      let received = event.streams?.[0];
+      if (!received && event.track && win.MediaStream) {
+        remoteStream ??= new win.MediaStream();
+        if (!(remoteStream.getTracks?.() ?? []).includes(event.track)) remoteStream.addTrack(event.track);
+        received = remoteStream;
+      }
+      attachRemoteAudio(received);
+    };
+    connection.onicecandidateerror = event => { info.iceErrorCode = Number(event.errorCode) || null; };
     connection.onconnectionstatechange = () => {
       const next = connection.connectionState;
       if (next === 'connected') patch({ status: 'live', peerPresent: true });
       if (next === 'failed' || next === 'disconnected') patch({ status: 'degraded' });
     };
     if (stream) for (const track of stream.getTracks()) connection.addTrack(track, stream);
+    rtcReady = true;
+    for (const message of pendingSignals.splice(0)) queueSignal(message);
 
     // 连接建好之前到达的「对方进来了」在这里补处理（远端档位靠它触发 offer）
     if (pendingPeer) {
@@ -605,20 +681,35 @@ export function createCallSession({
         return;
       }
       if (message.type === 'offer' && connection) {
-        await connection.setRemoteDescription(message.sdp);
-        const answer = await connection.createAnswer();
-        await connection.setLocalDescription(answer);
-        send({ type: 'answer', from: myId, sdp: connection.localDescription });
+        const pc = connection;
+        info.offersReceived++;
+        await pc.setRemoteDescription(message.sdp);
+        if (stopped || pc !== connection) return;
+        remoteDescriptionReady = true;
+        await flushCandidates(pc);
+        const answer = await pc.createAnswer();
+        if (stopped || pc !== connection) return;
+        await pc.setLocalDescription(answer);
+        if (!stopped && pc === connection) send({ type: 'answer', from: myId, sdp: pc.localDescription });
         return;
       }
       if (message.type === 'answer' && connection) {
-        await connection.setRemoteDescription(message.sdp);
+        const pc = connection;
+        info.answersReceived++;
+        await pc.setRemoteDescription(message.sdp);
+        if (stopped || pc !== connection) return;
+        remoteDescriptionReady = true;
+        await flushCandidates(pc);
         return;
       }
       if (message.type === 'ice' && connection) {
-        await connection.addIceCandidate(message.candidate);
+        info.candidatesReceived++;
+        if (!remoteDescriptionReady) {
+          if (pendingCandidates.length < 256) pendingCandidates.push(message.candidate);
+        } else await connection.addIceCandidate(message.candidate);
         return;
       }
+      if (message.type === 'retry' && connection && offerer === true) { await makeOffer(true); return; }
       if (message.type === 'level') {
         raw.peer = Math.max(0, Math.min(1, Number(message.value) || 0));
         return;
@@ -644,12 +735,21 @@ export function createCallSession({
         patch({ peerLeft: true, status: 'ended', peerPresent: false });
       }
     } catch (error) {
-      void error;
+      recordError(error, 'signal-' + message.type);
+      if (!stopped && state.status !== 'live') patch({ warning: 'rtc-negotiation-failed' });
+    }
+  }
+
+  async function flushCandidates(pc) {
+    for (const candidate of pendingCandidates.splice(0)) {
+      if (stopped || pc !== connection) return;
+      try { await pc.addIceCandidate(candidate); }
+      catch (error) { recordError(error, 'candidate'); }
     }
   }
 
   function startLoop() {
-    if (loopTimer) return;
+    if (stopped || loopTimer) return;
     const step = () => {
       if (stopped) return;
       const elapsed = clock() - state.startedAt;
@@ -680,6 +780,10 @@ export function createCallSession({
   }
 
   function closeConnection() {
+    rtcReady = false;
+    remoteDescriptionReady = false;
+    pendingSignals.length = 0;
+    pendingCandidates.length = 0;
     try {
       connection?.close?.();
     } catch (error) {
@@ -739,7 +843,41 @@ export function createCallSession({
      */
     resumeAudio,
 
+    async retryConnection() {
+      if (stopped || !connection || !transport || !state.peerPresent) return false;
+      patch({ status: 'connecting', warning: null });
+      if (transport.kind === 'remote' && offerer === false) send({ type: 'retry', from: myId });
+      else {
+        signalWork = signalWork.then(() => makeOffer(true));
+        await signalWork;
+      }
+      if (degradeTimer) win.clearTimeout?.(degradeTimer);
+      degradeTimer = win.setTimeout(() => { if (!stopped && state.status !== 'live') patch({ status: 'degraded' }); }, DEGRADE_MS);
+      return true;
+    },
+
+    async diagnostics() {
+      const report = { version: 'rtc-2026-10-13-2', ...info, mode: state.mode, status: state.status,
+        hasMic: state.hasMic, micTracks: stream?.getAudioTracks?.().length ?? 0, muted: state.muted,
+        speakerOn: state.speakerOn, audioBlocked: state.audioBlocked, playbackPaused: audioElement?.paused ?? null,
+        connectionState: connection?.connectionState ?? 'not-created', iceState: connection?.iceConnectionState ?? 'unknown',
+        bytesSent: 0, bytesReceived: 0, relay: null };
+      try {
+        const stats = await connection?.getStats?.();
+        let selected = null;
+        stats?.forEach?.(entry => {
+          if (entry.type === 'transport' && entry.selectedCandidatePairId) selected = stats.get(entry.selectedCandidatePairId);
+          if (entry.type === 'candidate-pair' && entry.state === 'succeeded' && entry.nominated) selected ??= entry;
+          if (entry.type === 'outbound-rtp' && (entry.kind ?? entry.mediaType) === 'audio') report.bytesSent += entry.bytesSent ?? 0;
+          if (entry.type === 'inbound-rtp' && (entry.kind ?? entry.mediaType) === 'audio') report.bytesReceived += entry.bytesReceived ?? 0;
+        });
+        if (selected) report.relay = [selected.localCandidateId, selected.remoteCandidateId].some(id => stats.get(id)?.candidateType === 'relay');
+      } catch { report.statsUnavailable = true; }
+      return report;
+    },
+
     setMode(next) {
+      if (!allowSimulation && next === 'sim') return snapshot();
       const target = normalizeMode(next);
       patch({ mode: target, status: target === 'sim' && state.status !== 'ended' ? 'live' : state.status });
       return snapshot();
@@ -779,6 +917,7 @@ export function createCallSession({
 
     /** 8 秒没连上时，页面可以一键切到模拟通话继续演。 */
     async fallbackToSim() {
+      if (!allowSimulation) return snapshot();
       stopped = true;
       send({ type: 'bye', from: myId });
       closeConnection();

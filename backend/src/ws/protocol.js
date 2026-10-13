@@ -34,6 +34,7 @@ export const MATCH_UPSTREAM = new Set(['queue:joined', 'ping']);
  * 载荷里同时带 id 与序号，是为了牌堆万一漂移时接收方还能按 id 找回同一张。
  */
 export const ROOM_RELAY = new Set([
+  'rtc:retry',
   'rtc:offer',
   'rtc:answer',
   'rtc:ice',

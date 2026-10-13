@@ -350,7 +350,7 @@ flowchart TD
 | `queue_expired` | 410 | 等待记录过期 | 提示「你的等待已过期」+ 一键重新排队 |
 | `match_request_expired` | 410 | 匹配请求被接受或超时 | 收起弹窗，人留在队列等下一次，不弹红页 |
 | `rate_limited` | 429 | 触发限流 | 退避重试 2 次 |
-| `turn_unavailable` | 503 | 拿不到 TURN 凭证 | 语音降级到本地档位，再退到模拟通话，界面不变 |
+| `turn_unavailable` | 503 | 拿不到 TURN 凭证 | 记录中继配置失败，可尝试 STUN 直连；未接通时明确提示失败，不模拟接通 |
 | `internal` | 500 | 服务端异常 | 结算类用本地估算值 + `FallbackBanner` |
 
 **总原则**：演示路径上任何一个失败都要有出路，宁可给「降级数据 + 说明」，也不要给死胡同。
@@ -550,7 +550,7 @@ flowchart TD
 | `/api/app/version-policy` | GET | 否 | 是 | `platform`、`version` | `minVersion`、`message`、`forceUpgrade` | 500 `internal` |
 
 - `iceServers` 是 STUN 与 TURN 的数组，TURN 凭证要有有效期（`expiresAt`）；房间建立前拉一次。
-- 拿不到 TURN 时返回 503 `turn_unavailable`，前端**降级而不是中断**：先试本地档位（同浏览器双标签页），再退到模拟通话，界面不变。
+- 拿不到 TURN 时返回 503 `turn_unavailable`，前端记录失败，可尝试 STUN 直连；真实后端档位不切换到模拟通话，未接通时如实提示。
   **实现口径（2026-09-29）**：后端判 503 的条件是「连 STUN 都拿不到」，而不是「没有 TURN」——
   同 Wi-Fi 直连只需要 STUN，真按字面回 503 会把最重要的演示路径掐死。前端两条分支都要留着。
 - `version-policy` 只给 APK 路线用（见 08），Web 端可以不调。
@@ -898,6 +898,7 @@ flowchart TD
 | `/ws/rooms/:roomId` | `rtc:offer` | 双向 | `sdp` | 交给 WebRTC 封装处理（服务端**原样转发**，不回给发送方） |
 | `/ws/rooms/:roomId` | `rtc:answer` | 双向 | `sdp` | 同上 |
 | `/ws/rooms/:roomId` | `rtc:ice` | 双向 | `candidate` | 同上 |
+| `/ws/rooms/:roomId` | `rtc:retry` | 双向 | 无 | 非发起方请求发起方执行 ICE 重连，避免双方同时创建 offer；只在房间参与者之间转发 |
 | `/ws/rooms/:roomId` | `rtc:level` | 双向 | `value`（0~1） | 对方说话音量，前端用来画对方的波形。跨设备档位没有 `BroadcastChannel` 可本地互看，只能靠它；约 11 条/秒 |
 | `/ws/rooms/:roomId` | `room:peer-muted` | 双向 | `muted` | `RoomHeader` 显示静音徽标（转发，不是服务端状态） |
 | `/ws/rooms/:roomId` | `room:card` | 双向 | `cardId`、`index`、`round` | 对方翻了话题卡 → 跟到同一张；`round` 变了说明对面换了叠，先取同一叠再跟过去；跟过去的一方不再回推。服务端**原样转发**，不回给发送方 |
@@ -917,9 +918,9 @@ flowchart TD
 - 房间 REST 与房间信令都只允许发起人和对方账号；第三个有效账号返回 403 `forbidden`。
 - 前端不需要做额外处理，但联调时要一起验。
 
-**降级顺序**（与 09 第 4.1 节的三级降级一致）：远端 WSS → 同浏览器 `BroadcastChannel` → 纯模拟（不发网络请求，界面完全一致）。
+**2026-10-13 更新：** 真实后端档位禁用模拟通话与本地频道兜底，连接失败如实显示未接通并可通过 `rtc:retry` 请求发起方进行 ICE 重连。开发 mock 档位仍可使用测试模拟。
 **2026-09-29 起三档都能跑**：远端 WSS 由 `src/services/rtc.js` 的 `createRemoteTransport` 接上（`local` / `remote` 共用同一套 SDP / ICE 逻辑，只换传输），
-拿不到信令地址或浏览器不支持 WebSocket 时自动退到 `BroadcastChannel` 并挂提示，不中断通话。
+真实后端拿不到信令地址或浏览器不支持 WebSocket 时显示未接通，不生成假的通话状态。
 
 ## 6. 后端最小实现清单
 
