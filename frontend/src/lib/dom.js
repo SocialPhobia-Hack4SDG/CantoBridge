@@ -90,34 +90,30 @@ export function frag(...children) {
   return fragment;
 }
 
-// Local SVG paths share a viewBox and inherit the active theme's text color.
-const ICON_PATHS = {
-  home: 'M3 10 12 3l9 7v10H3Z M9 20v-7h6v7',
-  match: 'M4 4h12v9H9l-5 4Z M18 8h3v12l-5-4h-4',
-  ranking: 'M4 20V12h5v8 M9 20V4h6v16 M15 20v-9h5v9 M2 20h20',
-  me: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-2a8 8 0 0 1 16 0v2',
-  back: 'm15 5-7 7 7 7', next: 'm9 5 7 7-7 7', check: 'm5 12 4 4L19 6',
-  star: 'm12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z',
-  starFilled: 'm12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z',
-  mic: 'M9 6a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0Z M5 10v2a7 7 0 0 0 14 0v-2 M12 19v3 M8 22h8',
-  micOff: 'm3 3 18 18 M9 5a3 3 0 0 1 6 1v5 M9 10v2a3 3 0 0 0 4 2.8 M5 10v2a7 7 0 0 0 11 5.7 M19 10v2 M12 19v3 M8 22h8',
-  speaker: 'M3 9h4l5-4v14l-5-4H3Z M16 8a6 6 0 0 1 0 8 M19 5a10 10 0 0 1 0 14',
-  hangup: 'M3 15v-4a17 17 0 0 1 18 0v4h-5v-3a12 12 0 0 0-8 0v3Z',
-  tram: 'M7 3h10l2 3v13H5V6Z M5 11h14 M12 3v8 M8 15h1 M15 15h1 M8 19l-2 3 M16 19l2 3 M9 1h6',
-};
-
 export function icon(name, { size = 24, className = 'icon' } = {}) {
+  const sheet = globalThis.CANTOBRIDGE_ICONS ?? {};
   const node = h('span', { class: className, 'aria-hidden': 'true', style: { width: size + 'px', height: size + 'px' } });
   node.dataset.icon = name;
-  const doc = currentDocument();
-  const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  for (const [key, value] of Object.entries({ viewBox: '0 0 24 24', width: '100%', height: '100%', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', focusable: 'false' })) svg.setAttribute(key, value);
-  const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', ICON_PATHS[name] ?? ICON_PATHS.match);
-  if (name === 'starFilled') path.setAttribute('fill', 'currentColor');
-  svg.appendChild(path); node.appendChild(svg);
+  node.textContent = sheet[name] ?? ICON_GLYPHS[name] ?? '';
   return node;
 }
+
+/** 图标统一用文本字形，避免引入图标库与字体文件；如需换成 SVG 只改这一处。 */
+export const ICON_GLYPHS = {
+  home: '◉',
+  match: '◎',
+  ranking: '▤',
+  me: '☺',
+  back: '‹',
+  check: '✓',
+  star: '☆',
+  starFilled: '★',
+  mic: '●',
+  micOff: '○',
+  speaker: '▲',
+  hangup: '×',
+  next: '›',
+};
 
 export function clear(element) {
   while (element.firstChild) element.removeChild(element.firstChild);
