@@ -72,7 +72,8 @@ test('h：元素、组件函数与属性都能用', () => {
   assert.equal(h(component, { title: '标题' }).textContent, '标题');
   assert.throws(() => h(component, {}, '多余子节点'), /props.children/);
   assert.equal(pill('标签', { tone: 'accent-soft' }).getAttribute('class'), 'pill tone-accent-soft');
-  assert.equal(icon('star').textContent, '☆');
+  assert.ok(icon('star').querySelector('svg'));
+  assert.equal(icon('star').querySelector('svg').getAttribute('stroke'), 'currentColor');
 });
 
 test('LoadingSkeleton / EmptyState / ErrorState / FallbackBanner：三态文本与动作', () => {

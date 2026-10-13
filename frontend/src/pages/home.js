@@ -30,7 +30,7 @@ function recommendBlock(ctx, view) {
   if (view.loading) {
     return h(
       'div',
-      { class: 'card recommend-block' },
+      { class: 'recommend-block' },
       h('h3', { class: 'card-title', text: t('home.recommendTitle') }),
       h(LoadingSkeleton, { variant: 'list', rows: 3 }),
     );
@@ -45,7 +45,7 @@ function recommendBlock(ctx, view) {
 
   return h(
     'div',
-    { class: 'card recommend-block' },
+    { class: 'recommend-block' },
     h('h3', { class: 'card-title', text: t('home.recommendTitle') }),
     h('p', { class: 'muted-note', text: t('home.recommendHint') }),
     h(
@@ -137,7 +137,7 @@ export const HomePage = definePage({
 
     return h(
       'section',
-      { class: 'stack' },
+      { class: 'stack home-layout' },
       h('p', { class: 'muted-note', text: t('app.slogan') }),
       h(HomeActionCard, {
         role,
@@ -152,7 +152,7 @@ export const HomePage = definePage({
         : view.loading
           ? h(LoadingSkeleton, { variant: 'grid', rows: 4 })
           : !hasActivity
-            ? h('div', { class: 'card first-chat-note' }, h('h3', { class: 'card-title', text: t('home.firstChatTitle') }), h('p', { class: 'muted-note', text: t('home.firstChatHint') }))
+            ? h('div', { class: 'first-chat-note' }, h('h3', { class: 'card-title', text: t('home.firstChatTitle') }), h('p', { class: 'muted-note', text: t('home.firstChatHint') }))
             : h(
               'div',
               { class: 'tile-grid' },
@@ -163,7 +163,7 @@ export const HomePage = definePage({
             ),
       h(
         'div',
-        { class: 'card' },
+        { class: 'recent-section' },
         h('h3', { class: 'card-title', text: t('home.recent') }),
         history.length === 0
           ? h('p', { class: 'muted-note', text: t('home.recentEmpty') })

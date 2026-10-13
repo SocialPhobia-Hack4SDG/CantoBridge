@@ -42,7 +42,7 @@
   /* 语义色 */
   --success: #0e9f6e;
   --warning: #b7791f;
-  --danger: #d64545;
+  --danger: #c63c3c;
 
   /* 阴影 */
   --shadow-card: 0 1px 2px rgba(33, 71, 57, 0.03), 0 8px 24px rgba(33, 71, 57, 0.04);
@@ -159,6 +159,7 @@
   --border-strong: rgba(230,240,250,.28);
   --warning: #edc078;
   --danger: #ef8787;
+  --on-danger: #111827;
   --shadow-card: 0 4px 20px rgba(0,0,0,.25);
   --shadow-raised: 0 12px 32px rgba(0,0,0,.4);
 }
