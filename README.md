@@ -1,53 +1,62 @@
 # CantoBridge
 
-让粤语学习者与粤语使用者一对一语音交流，以普通话、粤语、英文话题卡帮助开口。
+**Speak Cantonese. Meet Hong Kong.**
 
-这是黑客松 MVP：支持设备账号、双身份资料、匹配、真实 WebRTC 语音、同步话题卡、结算、伙伴申请、历史记录和积分商城。话题卡来自预先准备的内置内容库，当前不调用实时生成模型。
+CantoBridge brings Cantonese learners and Cantonese speakers together for relaxed, one-to-one voice conversations. Meet someone who shares your interests, explore everyday topics, and practise at your own pace.
 
-## 本地运行
+You do not need perfect Cantonese or a prepared script. Conversation cards help you find your first words and keep the chat going.
 
-需要 Node.js 22 或更新版本。打开两个终端：
+**[Open CantoBridge](https://cantobridge.onrender.com)**
 
-```sh
-# 终端一，仓库根目录
-npm ci --prefix backend
-npm --prefix backend start
+## Who is it for?
 
-# 终端二，仓库根目录
-npm --prefix frontend run serve
-```
+- **Cantonese Learners:** practise speaking with a real person, with pronunciation and translation support.
+- **Cantonese Buddies:** help someone practise Cantonese while sharing your interests and everyday life. You can also connect with learners who want to help you practise Mandarin or English.
 
-打开 `https://localhost:4173/`。本地服务器会生成自签证书。公网部署使用云平台提供的受信任 HTTPS，不分发本机证书。仅查看模拟界面可以打开 `https://localhost:4173/?api=mock`。
+## Get started
 
-## 免费公网内测
+1. Open the website and select **Get Started**. No invitation code is needed.
+2. Create your account. There is no password to remember; your browser remembers your account on this device.
+3. Choose your role, add your language background and interests, and decide which profile details others can see.
+4. Go to **Match** or choose an available recommended partner on your home page.
+5. Allow microphone access when prompted, and start talking.
 
-部署方案：一个 Render Free 服务同时提供前端、REST 和 WebSocket，Supabase Free 保存数据，Metered TURN 为跨网络语音提供中继。当前用户选择无需绑卡的 500 MB 免费试用档位，额度有限，先用于演示验收。电脑关机后云服务继续独立运行。
+Matching depends on other people being available. For a first try with a friend, open the website on two devices and choose complementary roles: one Learner and one Buddy.
 
-**当前状态：部署代码已准备；实际公网链接和真实跨网络通话需要完成账户配置与验收后才能确认。**
+## Inside a conversation
 
-详细步骤、环境变量、安全边界与验收流程见 [部署说明](deploy/README.md)。仓库根目录的 `render.yaml` 明确选用免费服务，不创建付费磁盘或数据库。
+- **Voice only:** talk one-to-one without turning on a camera. Headphones help prevent echo.
+- **Shared topic cards:** both partners can follow the same card. Cards include Cantonese, Jyutping pronunciation, Mandarin, and English.
+- **Useful phrases:** save expressions you would like to practise again.
+- **Simple controls:** mute your microphone, control playback, or end the call whenever you need to.
+- **Connection help:** use **Reconnect** if the call disconnects. Expand **Call check** to view connection information when troubleshooting.
 
-公网入口直接开放，无需输入邀请口令，最多接受 50 个设备账号。账号目前与浏览器设备密钥绑定；清除浏览器数据会丢失该账号的访问入口，暂不支持跨设备找回。如需恢复邀请保护，可按部署文档启用。
+Topic cards currently come from a prepared collection; they are not generated live during your conversation.
 
-真实通话已禁用模拟兜底，连接失败不会显示模拟接通。房间提供「重新连接」和「通话检查」，后者可用于排查中继、信令和播放，不输出密码、密钥、候选地址或完整 SDP。
+## Keep coming back
 
-免费服务有额度和休眠限制：Render 闲置后会休眠，首次访问可能等待约一分钟；Supabase 低活跃项目可能暂停，需在后台恢复。超额、暂停或供应商故障会影响访问，不保证全天秒开。服务重启或重新部署会中断正在进行的通话和排队，已保存的资料、积分、伙伴关系和历史会保留。
+Review your conversation history and progress, send partner requests, and earn points and achievements through participation. Use the Points Shop to unlock available avatars, frames, and colour themes.
 
-## 验证
+The interface supports **English, Simplified Chinese, and Traditional Chinese**, with five colour themes, including a night theme.
 
-```sh
-npm ci
-npm test
-npm run check
-```
+## Your account and privacy
 
-测试包括前后端回归、邀请口令与权限、云端重启恢复、并发保存、保存失败、TURN 配置和完整公网入口。自动测试不替代两台真实设备的麦克风与跨网络通话验收。
+Your account is linked to the browser you use. Return with the same browser on the same device to continue. Clearing website data, using a private browsing session, or signing out can remove your access to that account. Account recovery and transferring an account to another device are not currently available.
 
-## 文档与素材
+You can choose which profile details to share and enable anonymous mode to hide your username and user ID from other users. Turning off profile details does not hide your avatar and name unless anonymous mode is also enabled.
 
-- [前端说明](frontend/README.md)、[后端说明](backend/README.md)
-- [API 契约](frontend/docs/10-api-v1.md)
-- [头像来源记录](frontend/assets/avatars/README.md)、[Logo 来源记录](frontend/assets/branding/README.md)
-- 粤拼生成工具的第三方许可保留于 [ToJyutping-LICENSE.txt](frontend/tools/ToJyutping-LICENSE.txt)。仓库目前没有项目级开源许可证。
+## If something does not work
 
-真实环境配置、密钥、用户数据、依赖和私人工作记忆不得提交。`.env.example` 仅列变量名，不包含真实凭证。
+| What you notice | What to try |
+| --- | --- |
+| The website takes a while to open | Wait about a minute and try again. The free hosting service may need to wake up after being idle. |
+| No partner is available | Keep waiting, try later, or arrange a time with a friend. |
+| Your partner cannot hear you | Check the microphone permission and mute button. Confirm that the browser is using the correct microphone. |
+| You cannot hear your partner | Check playback, device volume, and the selected speaker or headphones. Tap the page if the browser requires a gesture to start audio. |
+| A call disconnects | Check both devices' internet connections and select Reconnect. If needed, leave the call and start a new one. |
+
+## About this version
+
+CantoBridge is a hackathon prototype available for small-scale testing. It is free to try, with an initial limit of 50 device accounts. Availability and calls depend on free service allowances; temporary interruptions can occur, and a service restart can end an active call.
+
+Try a short conversation first, share feedback with the project team, and help us make practising Cantonese more welcoming.
