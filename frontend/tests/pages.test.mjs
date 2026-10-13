@@ -180,6 +180,29 @@ test('成就墙四项预览，全屏十项，佩戴单称号可替换并卸下�
   assert.equal(buddyNode.querySelectorAll('.badge').length, 10);
 });
 
+test('个人页伙伴列表放在滚动窗口里，每个伙伴是带自己操作按钮的独立条目', () => {
+  const { node } = renderPage('ProfilePage', {
+    data: {
+      progress: { conversations: 2, totalMinutes: 46, streakDays: 3 }, history: [], me: {},
+      buddies: [{ peerId: 'ka-ho', label: 'ka-ho' }, { peerId: 'ming-chu', label: '明珠' }],
+      requests: [{ peerId: 'wai-ling', label: '匿名伙伴', direction: 'incoming', status: 'pending' }],
+    },
+  });
+  assert.ok(node.querySelector('.buddy-scroll'), '伙伴列表要包在滚动窗口里');
+  assert.ok(node.querySelector('.buddy-scroll .buddy-slot'), '滚动窗口里放的应该是伙伴列表');
+  const rows = node.querySelectorAll('.buddy-scroll .buddy-row');
+  assert.equal(rows.length, 3, '两个已连接的伙伴加一条收到的申请');
+  for (const row of rows) {
+    assert.ok(row.querySelectorAll('button').length >= 1, '每个伙伴条目都要带自己的操作按钮');
+  }
+});
+
+test('伙伴列表为空时，占位说明同样留在滚动窗口内', () => {
+  const { node } = renderPage('ProfilePage', { data: { progress: {}, history: [], me: {}, buddies: [], requests: [] } });
+  assert.ok(node.querySelector('.buddy-scroll .buddy-slot.is-empty'), '空状态不该跑到窗口外面');
+  assert.equal(node.querySelectorAll('.buddy-scroll .buddy-row').length, 0);
+});
+
 for (const entry of PAGES) {
   test(entry.name + '：能渲染出内容，且不出现裸 key', () => {
     const role = entry.name === 'PeerPreviewPage' || entry.name === 'MatchPage' ? 'buddy' : 'learner';

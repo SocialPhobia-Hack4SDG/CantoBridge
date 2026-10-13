@@ -119,3 +119,11 @@
 - `.env.example` 补上 `CANTOBRIDGE_INVITE_REQUIRED`；新增测试确保示例文件覆盖 `deploy/config.mjs` 读取的每个变量，仅豁免平台自动注入（`RENDER`、`RENDER_EXTERNAL_URL`）与 Cloudflare 可选适配两项。
 - `tests/publication.test.mjs` 里指向已不存在文件的示例路径改为根目录 `.env.example`；TODO 台账里过期的测试计数同步更新。
 - 验证：后端 193、前端 583、根目录 46，共 822 项全部通过；npm run check 与 git diff --check 通过。本轮只改文档与测试，未触碰部署行为。
+
+
+## 2026-10-13 个人页伙伴列表改为等高滚动窗口（making it better）
+
+- 「我的伙伴」卡片在桌面双栏里与左侧成就墙等高：卡片自身不再参与撑高网格行（滚动区 flex-basis 为 0、min-height 为 0，内容再长也不进内在尺寸计算），行高由成就墙决定，卡片 stretch 填满整行。
+- 好友列表放进独立滚动窗口：窗口底色用页面背景，好友条目改成带圆角和边线的独立方块、底色用卡片色，不再靠分隔线串联；条目多时只在窗口内部滚动，overscroll-behavior: contain 防止滚动穿透到页面。
+- 新增两条回归：伙伴列表必须包在 .buddy-scroll 里、每个条目都要带自己的操作按钮；空列表的占位说明也留在窗口内。
+- 验证：后端 193、前端 585、根目录 46，共 824 项全部通过；npm run check 与 git diff --check 通过。等高与滚动是 CSS 行为，真机观感仍需用户确认。
