@@ -175,6 +175,7 @@ test('公网房间忽略旧模拟设置，失败按钮重连真实连接并显�
     rooms: new Map(), view: {}, api: { getCards: async () => ({ cards: [] }), getIceServers: async () => ({ iceServers: [{ urls: 'turns:example.test:443', username: 'test', credential: 'test' }] }) },
     t, label: (_group, value) => value ?? '', paint() {}, setBanner: banner => banners.push(banner), onCleanup() {},
   };
+  let paints = 0; ctx.paint = () => { paints++; };
   ctx.view.data = await ChatRoomPage.load(ctx);
   const call = ctx.view.call;
   assert.equal(call.snapshot().mode, 'remote');
@@ -189,8 +190,21 @@ test('公网房间忽略旧模拟设置，失败按钮重连真实连接并显�
   assert.equal(call.snapshot().mode, 'remote');
   const rendered = ChatRoomPage.render(ctx, ctx.view);
   assert.ok(rendered.textContent.includes(t('room.check')));
-  rendered.walk().find(node => node.tagName === 'BUTTON' && node.textContent === t('room.checkRefresh')).click(); await harness.settle();
+  const pendingReport = deferred(); let checks = 0;
+  call.diagnostics = () => { checks++; return pendingReport.promise; };
+  const refresh = rendered.walk().find(node => node.tagName === 'BUTTON' && node.textContent === t('room.checkRefresh'));
+  const paintsBefore = paints;
+  refresh.click(); refresh.click(); await harness.settle();
+  assert.equal(checks, 1);
+  assert.equal(refresh.disabled, true);
+  ctx.el = ChatRoomPage.render(ctx, ctx.view);
+  const newerRefresh = ctx.el.querySelector('.call-diagnostics').querySelector('button');
+  assert.equal(newerRefresh.disabled, true);
+  pendingReport.resolve({ version: 'rtc-2026-10-13-2' }); await harness.settle();
   assert.ok(ctx.view.local.diagnosticsReport.includes('rtc-2026-10-13-2'));
+  assert.equal(newerRefresh.disabled, false);
+  assert.equal(ctx.el.querySelector('.call-diagnostics').querySelector('pre').hidden, false);
+  assert.equal(paints, paintsBefore, '检查结果不能重新绘制通话或话题卡片');
   await call.hangup();
 });
 
@@ -214,4 +228,33 @@ test('移动浏览器手势解锁先调用 play，不能等待音频上下文后
   resumed.resolve(); await harness.settle();
   assert.equal(call.snapshot().audioBlocked, false);
   await call.hangup();
+});
+
+
+test('Safari 通话统计不返回时，两秒后结束检查且可以再次刷新', async () => {
+  const harness = createRtcHarness();
+  const call = harness.session(); await call.start();
+  harness.connections[0].getStats = () => new Promise(() => {});
+  let finished = false;
+  const checking = call.diagnostics().then(value => { finished = true; return value; });
+  await harness.settle();
+  harness.clock.tick(1999); await harness.settle();
+  assert.equal(finished, false);
+  harness.clock.tick(1); await harness.settle();
+  assert.equal((await checking).statsUnavailable, true);
+  harness.connections[0].getStats = async () => new Map();
+  assert.equal((await call.diagnostics()).statsUnavailable, undefined);
+  await call.hangup();
+  assert.equal(harness.clock.pending(), 0);
+});
+
+test('通话统计被浏览器拒绝时返回安全报告，不留下超时定时器', async () => {
+  const harness = createRtcHarness();
+  const call = harness.session(); await call.start();
+  harness.connections[0].getStats = () => { throw Error('private browser details'); };
+  const report = await call.diagnostics();
+  assert.equal(report.statsUnavailable, true);
+  assert.equal(JSON.stringify(report).includes('private browser details'), false);
+  await call.hangup();
+  assert.equal(harness.clock.pending(), 0);
 });

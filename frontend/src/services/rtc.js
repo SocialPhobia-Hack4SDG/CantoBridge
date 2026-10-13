@@ -863,7 +863,16 @@ export function createCallSession({
         connectionState: connection?.connectionState ?? 'not-created', iceState: connection?.iceConnectionState ?? 'unknown',
         bytesSent: 0, bytesReceived: 0, relay: null };
       try {
-        const stats = await connection?.getStats?.();
+        // Safari can leave getStats pending during ICE/network transitions.
+        // Bound this read so the diagnostic button always becomes usable again.
+        let timeout;
+        let stats;
+        try {
+          stats = await Promise.race([
+            Promise.resolve().then(() => connection?.getStats?.()),
+            new Promise((_, reject) => { timeout = win.setTimeout(() => reject(Error('stats timeout')), 2000); }),
+          ]);
+        } finally { win.clearTimeout(timeout); }
         let selected = null;
         stats?.forEach?.(entry => {
           if (entry.type === 'transport' && entry.selectedCandidatePairId) selected = stats.get(entry.selectedCandidatePairId);

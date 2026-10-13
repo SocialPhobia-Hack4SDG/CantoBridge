@@ -18,6 +18,36 @@ import { summaryModel } from '../lib/viewModel.js';
 import { readStoredToken } from '../services/http.js';
 import { createCallSession } from '../services/rtc.js';
 
+// Update only this panel: repainting the entire room disrupts Safari scrolling
+// and recreates the card gesture listeners while a call is in progress.
+function diagnosticsPanel(ctx, local, call) {
+  const report = h('pre', { class: 'call-diagnostics-report', hidden: !local.diagnosticsReport, text: local.diagnosticsReport ?? '' });
+  const button = h('button', { class: 'btn btn-secondary', type: 'button', disabled: local.diagnosticsPending,
+    'aria-busy': String(Boolean(local.diagnosticsPending)), onClick: () => {
+      if (local.diagnosticsPending) return;
+      local.diagnosticsPending = true;
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      void Promise.resolve().then(() => call.diagnostics()).catch(() => ({ statsUnavailable: true })).then(value => {
+        local.diagnosticsReport = JSON.stringify(value, null, 2);
+      }).finally(() => {
+        local.diagnosticsPending = false;
+        // A normal call-status change may have rendered a newer panel meanwhile.
+        const current = ctx.el?.querySelector?.('.call-diagnostics') ?? panel;
+        const currentReport = current.querySelector('pre');
+        const currentButton = current.querySelector('button');
+        if (currentReport) { currentReport.textContent = local.diagnosticsReport; currentReport.hidden = false; }
+        if (currentButton) { currentButton.disabled = false; currentButton.setAttribute('aria-busy', 'false'); }
+      });
+    },
+  }, ctx.t('room.checkRefresh'));
+  const panel = h('details', { class: 'card field call-diagnostics', open: local.diagnosticsOpen ? true : undefined,
+    onToggle: event => { local.diagnosticsOpen = event.target.open; } },
+    h('summary', { text: ctx.t('room.check') }),
+    h('p', { class: 'muted-note', text: ctx.t('room.checkHint') }), button, report);
+  return panel;
+}
+
 const PEER_LEFT_SETTLE_MS = 2000;
 
 /**
@@ -295,14 +325,7 @@ export const ChatRoomPage = definePage({
               title: t('room.phraseHint'),
             }),
           ]),
-      !ctx.demo && call?.diagnostics ? h('details', { class: 'card field', open: local.diagnosticsOpen ? true : undefined, onToggle: event => { local.diagnosticsOpen = event.target.open; } },
-        h('summary', { text: t('room.check') }),
-        h('p', { class: 'muted-note', text: t('room.checkHint') }),
-        h('button', { class: 'btn btn-secondary', type: 'button', onClick: () => {
-          void call.diagnostics().then(report => { local.diagnosticsReport = JSON.stringify(report, null, 2); ctx.paint(); });
-        } }, t('room.checkRefresh')),
-        local.diagnosticsReport ? h('pre', { style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: '12px' }, text: local.diagnosticsReport }) : null,
-      ) : null,
+      !ctx.demo && call?.diagnostics ? diagnosticsPanel(ctx, local, call) : null,
       h(CallControls, {
         muted: snapshot.muted,
         speakerOn: snapshot.speakerOn !== false,
