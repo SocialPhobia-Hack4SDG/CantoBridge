@@ -2,7 +2,7 @@
 
 > 让粤语学习者与粤语母语者（Cantonese Buddy）一对一开口聊天：AI 生成普通话 / 粤语 / 英文三语话题卡，把「先学一门语言，再找机会用它」变成「在真正使用一门语言的过程中学习它」。
 
-**当前状态：规划文档 + 零依赖 MVP，默认就是真后端。** 16 个路由、38 个组件、582 个测试全绿。打开 `https://localhost:4173/` 直接连本机后端（`8787`）；想跑纯模拟数据、不开后端，加 `?api=mock`。`npm run e2e:real` 已用真后端走完 5 分钟主路径（17/17，2026-10-05 复测）；**两台真机的语音连线也已经打通** —— 各自注册一个账号、进同一间房、对着麦克风说话能互相听见。
+**当前状态：规划文档 + 零依赖 MVP，默认就是真后端。** 16 个路由、38 个组件、583 个测试全绿。打开 `https://localhost:4173/` 直接连本机后端（`8787`）；想跑纯模拟数据、不开后端，加 `?api=mock`。`npm run e2e:real` 已用真后端走完 5 分钟主路径（17/17，2026-10-05 复测）；**两台真机的语音连线也已经打通** —— 各自注册一个账号、进同一间房、对着麦克风说话能互相听见。
 
 `tools/serve.mjs` 现在是**同源反向代理**：一个端口同时发静态文件、把 `/api/*` 转给后端、把 `/ws/*` 的 upgrade 隧道给后端，并且默认走 **HTTPS**（自签证书自动生成，**启动时比对局域网地址、过时就自动重签**）。这样手机用局域网 IP 打开时 `getUserMedia` 才拿得到麦克风——局域网 IP 不算安全上下文，只有 `localhost` 算。
 
@@ -135,7 +135,7 @@ frontend/
 │   ├── pages/            16 个页面模块
 │   ├── services/         mockApi.js（纯 mock 档位的实现，候选池默认空）+ httpApi.js（37 个方法走真后端，3 个后置方法降级）、rtc.js 通话会话（sim / local / remote 三档，local 走 BroadcastChannel、remote 走 WebSocket）
 │   └── styles/           tokens.css 设计 token + app.css
-├── tests/                582 个测试（含 app.test.mjs 端到端 happy path，以及 tools/e2e-real.mjs 真后端脚本）
+├── tests/                583 个测试（含 app.test.mjs 端到端 happy path，以及 tools/e2e-real.mjs 真后端脚本）
 │   └── helpers/          rtc-stub.mjs：RTC 替身（虚拟时钟 / 假 WebSocket / BroadcastChannel / RTCPeerConnection / 麦克风 / Audio），单测与 backend 的双端彩排共用；另有 app-harness.mjs（把 app 真跑起来的 DOM harness）与 http-stub.mjs（假 fetch）
 ├── tools/                serve.mjs 同源反代服务器（静态 + /api + /ws 隧道 + HTTPS 自签证书 + /cert.crt 证书下载）、e2e-real.mjs 真后端端到端脚本、check-docs.mjs / check-ui.mjs / check-api.mjs 一致性校验
 ├── tasks/                交接提示词：把一次改动整段复制给实现 agent
@@ -145,7 +145,7 @@ frontend/
 ## 测试与一致性校验
 
 ```powershell
-node --test "tests/**/*.test.mjs" "tools/**/*.test.mjs"   # 或 npm test：582 个测试
+node --test "tests/**/*.test.mjs" "tools/**/*.test.mjs"   # 或 npm test：583 个测试
 npm run check                                             # 或 node tools/check-docs.mjs && node tools/check-ui.mjs && node tools/check-api.mjs
 ```
 

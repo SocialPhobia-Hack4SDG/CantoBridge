@@ -300,6 +300,10 @@ test('GET /api/leaderboard：榜上只有真实账号，名次连续，匿名连
     const other = await ui.signInAs('learner', { deviceId: 'device-b' });
     ui.db.updateProgress(me.userId, { ...createProgress(), xp: 9999, practiceMinutesThisWeek: 321, totalMinutes: 654 });
     ui.db.updateProgress(other.userId, { totalMinutes: 6 });
+    for (const role of ['learner', 'buddy']) {
+      ui.db.appendHistory(me.userId, { role, durationSec: 99990, cardsUsed: 0, startedAt: new Date().toISOString() });
+      ui.db.appendHistory(other.userId, { role, durationSec: 360, cardsUsed: 0, startedAt: new Date().toISOString() });
+    }
     ui.db.updateSettings(me.userId, { anonymous: true });
 
     for (const period of ['weekly', 'monthly']) {

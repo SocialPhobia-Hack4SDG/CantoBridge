@@ -6,7 +6,7 @@
  * 假候选人是同一类问题——用户看到的「别人」其实是编的。
  *
  * 现在 `GET /api/leaderboard` 遍历**真实账号**的进度现场算（见 `domain/social.js`），
- * 累计对话时长超过 5 分钟才具备上榜资格。
+ * 对应身份在该周期内累计通话满 30 秒才具备上榜资格。
  */
 
 /** 榜单的合法取值（契约 4.7 节：`period` weekly / monthly，`role` 走 ROLES 词表）。 */
@@ -20,4 +20,4 @@ export const ANONYMOUS_LABEL = '匿名用户';
  * 每张榜最多展示 30 人。
  */
 export const LEADERBOARD_LIMIT = 30;
-export const LEADERBOARD_MIN_MINUTES = 5;
+export const LEADERBOARD_MIN_SECONDS = 30;

@@ -220,15 +220,16 @@ test('排行榜：没有假人，榜上只有本机这一行；开了匿名立�
     store.getState().progress.totalMinutes = minutes;
     assert.deepEqual(await api.getLeaderboard('weekly', 'learner'), []);
   }
-  store.getState().progress.totalMinutes = 6;
+  store.getState().social.history = [{ role: 'learner', durationSec: 30, cardsUsed: 0, startedAt: new Date(store.now()).toISOString() }];
+  assert.deepEqual(await api.getLeaderboard('weekly', 'buddy'), []);
   const weekly = await api.getLeaderboard('weekly', 'learner');
   assert.equal(weekly.length, 1, '本机只认识自己一个账号，榜上就不该有别人');
   assert.deepEqual(weekly.map((row) => row.rank), [1]);
   assert.equal(weekly[0].isMe, true);
   assert.equal(weekly[0].anonymous, false);
   assert.equal(weekly[0].userId, store.getState().learnerProfile.userId, '实名时下发的是本机资料 id');
-  assert.equal(weekly[0].xp, 0, '新设备没练过就是 0 分');
-  assert.equal(weekly[0].minutes, 6);
+  assert.equal(weekly[0].xp, 3, '30 秒通话积分');
+  assert.equal(weekly[0].minutes, .5);
 
   store.saveSettings({ anonymous: true });
   const hidden = await api.getLeaderboard('weekly', 'learner');

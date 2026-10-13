@@ -11,6 +11,7 @@
  * 解除伙伴只删伙伴关系：通话记录、积分、成就全部保留。
  */
 
+import { leaderboardStats } from '../lib/leaderboard.js';
 import { ApiError } from '../http/envelope.js';
 import { achievementStatistics, publicTitle } from '../lib/achievementTitles.js';
 import { requireSession } from '../http/auth.js';
@@ -18,7 +19,7 @@ import { ROLES } from '../data/vocabularies.js';
 import {
   ANONYMOUS_LABEL,
   LEADERBOARD_LIMIT,
-  LEADERBOARD_MIN_MINUTES,
+  LEADERBOARD_MIN_SECONDS,
   LEADERBOARD_PERIODS,
 } from '../data/leaderboard.js';
 import { buddyLevel, unlockedAchievements } from '../lib/scoring.js';
@@ -282,7 +283,7 @@ export function createSocialHandlers({ db, now = () => Date.now() }) {
      * GET /api/leaderboard —— 周榜 / 月榜 × 学习者 / 母语者。
      *
      * **从真实账号的进度现场算**，没有任何预置行：遍历 `db.listProgress()`，
-     * 累计对话时长超过 5 分钟才上榜。名次按 xp 降序，取前 `LEADERBOARD_LIMIT` 名。
+     * 对应身份在该周期内累计通话满 30 秒才上榜。名次按 xp 降序，取前 `LEADERBOARD_LIMIT` 名。
      *
      * 匿名规则与契约 4.7 一致：`settings.anonymous` 打开、或关掉了 `leaderboardVisible`，
      * 这一行就显示成「匿名伙伴」——连 `userId` 都不下发，避免从 id 反推身份。
@@ -294,8 +295,9 @@ export function createSocialHandlers({ db, now = () => Date.now() }) {
 
       const rows = [];
       for (const progress of db.listProgress()) {
-        if ((progress.totalMinutes ?? 0) <= LEADERBOARD_MIN_MINUTES) continue;
         const accountId = progress.accountId;
+        const stats = leaderboardStats(db.listHistory(accountId), role, period, now());
+        if (stats.seconds < LEADERBOARD_MIN_SECONDS) continue;
         // 这个账号在这一张榜上是谁：一个账号两种身份，取它对应的那份资料
         const profile = db.getProfile(accountId, role);
         if (!profile) continue;
@@ -307,15 +309,13 @@ export function createSocialHandlers({ db, now = () => Date.now() }) {
           anonymous,
           avatarId: anonymous ? 'neutral' : (db.getUser(accountId)?.avatarId ?? 'neutral'),
           frameId: anonymous ? 'none' : (db.getUser(accountId)?.frameId ?? 'none'),
-          minutes:
-            period === 'weekly'
-              ? (progress.practiceMinutesThisWeek ?? 0)
-              : (progress.totalMinutes ?? 0),
-          xp: progress.xp ?? 0,
+          minutes: stats.minutes,
+          xp: stats.xp,
+          seconds: stats.seconds,
         });
       }
 
-      rows.sort((a, b) => b.xp - a.xp);
+      rows.sort((a, b) => b.xp - a.xp || b.seconds - a.seconds || a.accountId.localeCompare(b.accountId));
       const entries = rows.slice(0, LEADERBOARD_LIMIT).map((row, index) => ({
         rank: index + 1,
         userId: row.anonymous ? ANONYMOUS_LABEL : row.name,

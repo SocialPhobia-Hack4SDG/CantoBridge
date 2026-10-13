@@ -27,6 +27,7 @@ import {
   sharedTags,
   uniqueList,
 } from '../lib/logic.js';
+import { leaderboardStats } from '../lib/leaderboard.js';
 import { pickCards, seedFrom } from '../lib/topicPicker.js';
 import { FRAMES, LEGACY_FRAME_IDS, ownedFrames } from '../data/frames.js';
 import { ownedAvatars, AVATARS } from '../data/avatars.js';
@@ -542,18 +543,17 @@ export function createMockApi({ store, sleep, candidates = EMPTY_CANDIDATES } = 
      *
      * 以前这里读的是写死的四组假榜单，于是新注册的人在榜上排第 5，前面四位都是编的。
      * 现在按「服务端真会返回什么」来算：mock 层只认识本机账号一个账号，
-     * 累计对话超过 5 分钟才返回自己；真后端按同一门槛筛选后取 XP 前 30 名。
+     * 该身份在该周期内累计通话满 30 秒才返回自己；真后端按同一门槛筛选后取 XP 前 30 名。
      *
      * `period` 只影响后端统计窗口，本机这一行在 mock 里没有历史窗口之分，
      * 照样返回——形状对得上，页面不用分支。
      */
     async getLeaderboard(period = 'weekly', role = 'learner') {
-      void period;
-      void role;
       const state = store.getState();
-      const meId = currentProfile().userId;
-      const stats = store.stats();
-      if (stats.totalMinutes <= 5) return respond([]);
+      const profile = role === 'buddy' ? state.buddyProfile : state.learnerProfile;
+      const meId = profile.userId;
+      const stats = leaderboardStats(state.social.history ?? [], role, period, store.now());
+      if (stats.seconds < 30) return respond([]);
       // 匿名是**实时读设置**，不落库：用户在设置里一开，榜单上立刻打码。
       const anonymous = Boolean(state.settings.anonymous) || state.settings.leaderboardVisible === false;
       return respond([
@@ -561,10 +561,10 @@ export function createMockApi({ store, sleep, candidates = EMPTY_CANDIDATES } = 
           rank: 1,
           userId: anonymous ? ANONYMOUS_LABEL : meId,
           anonymous,
-          avatarId: anonymous ? 'neutral' : currentProfile().avatarId,
-          frameId: anonymous ? 'none' : (currentProfile().frameId ?? 'none'),
-          minutes: stats.totalMinutes,
-          xp: state.progress.xp,
+          avatarId: anonymous ? 'neutral' : profile.avatarId,
+          frameId: anonymous ? 'none' : (profile.frameId ?? 'none'),
+          minutes: stats.minutes,
+          xp: stats.xp,
           isMe: true,
         },
       ]);

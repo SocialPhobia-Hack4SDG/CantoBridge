@@ -137,12 +137,12 @@ test('排行榜空榜说明三语可读，四张榜保持规则，并最多渲�
   for (const period of ['weekly', 'monthly']) for (const role of ['learner', 'buddy']) {
     const { node, text } = renderPage('LeaderboardPage', { data, local: { period, role } });
     assert.ok(node.querySelector('.leaderboard-empty-rule'));
-    assert.match(text, /超过 5 分钟/);
+    assert.match(text, /30 秒/);
     assert.match(text, /30/);
   }
   for (const locale of ['zh-Hans', 'zh-Hant', 'en']) {
     const label = createTranslator(locale)('leaderboard.empty');
-    assert.match(label, /5/); assert.match(label, /30/);
+    assert.match(label, /30/);
   }
   data.weekly.learner = Array.from({ length: 35 }, (_, i) => ({ rank: i + 1, userId: `test-${i}`, minutes: 6, xp: 35 - i }));
   const { node } = renderPage('LeaderboardPage', { data, local: { period: 'weekly', role: 'learner' } });

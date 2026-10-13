@@ -17,7 +17,7 @@ export const LeaderboardPage = definePage({
       ctx.api.getLeaderboard('monthly', 'learner'),
       ctx.api.getLeaderboard('monthly', 'buddy'),
     ]);
-    ctx.view.local = { period: 'weekly', role: 'learner' };
+    ctx.view.local = { period: 'weekly', role: ctx.getState().role === 'buddy' ? 'buddy' : 'learner' };
     return { weekly: { learner: weeklyLearners, buddy: weeklyBuddies }, monthly: { learner: monthlyLearners, buddy: monthlyBuddies } };
   },
 
@@ -71,6 +71,7 @@ export const LeaderboardPage = definePage({
           }),
         ),
       ),
+      h('p', { class: 'muted-note', text: t('leaderboard.rule') }),
       mapped.length === 0
         ? h('p', { class: 'leaderboard-empty-rule', text: t('leaderboard.empty') })
         : h(LeaderboardList, { rows: mapped, me, labels: { me: t('leaderboard.me') } }),

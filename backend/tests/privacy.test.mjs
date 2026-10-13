@@ -21,6 +21,7 @@ test('隐藏标签保留头像，匿名切换裁剪姓名并同步已有队列�
     assert.equal(me.settings.anonymous, true); assert.equal(me.learnerProfile.displayName, '不能泄露姓名');
     const buddy = peerViewOf(ui.db, userId, 'buddy'); assert.equal(buddy.anonymous, true); assert.equal(buddy.displayName, null);
     ui.db.updateProgress(userId, { totalMinutes: 6 });
+    ui.db.appendHistory(userId, { role: 'learner', durationSec: 30, cardsUsed: 0, startedAt: new Date().toISOString() });
     const leaderboard = await ui.request('GET', '/api/leaderboard?period=weekly&role=learner', { token });
     assert.ok(JSON.stringify(leaderboard.json.data).includes('匿名用户')); assert.ok(!JSON.stringify(leaderboard.json.data).includes('不能泄露姓名'));
     await ui.request('PUT', '/api/me/settings', { token, body: { anonymous: false } });

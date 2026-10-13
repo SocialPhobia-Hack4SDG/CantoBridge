@@ -37,6 +37,8 @@ Topic cards currently come from a prepared collection; they are not generated li
 
 Review your conversation history and progress, send partner requests, and earn points and achievements through participation. Use the Points Shop to unlock available avatars, frames, and colour themes.
 
+Learners and Cantonese Buddies have separate weekly and monthly rankings. Complete at least 30 seconds of calls in the selected period to qualify; your rank updates after the call ends and reflects conversation XP earned in that role.
+
 The interface supports **English, Simplified Chinese, and Traditional Chinese**, with five colour themes, including a night theme.
 
 ## Your account and privacy
