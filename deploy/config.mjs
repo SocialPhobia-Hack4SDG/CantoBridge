@@ -9,8 +9,9 @@ export function deploymentConfig(env = process.env) {
   if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.search || parsed.hash || parsed.pathname !== '/') {
     throw new Error('PUBLIC_ORIGIN must be an HTTPS origin without a path');
   }
-  const inviteCode = required('CANTOBRIDGE_INVITE_CODE');
-  if (inviteCode.length < 16) throw new Error('CANTOBRIDGE_INVITE_CODE must contain at least 16 characters');
+  const inviteRequired = env.CANTOBRIDGE_INVITE_REQUIRED === 'true';
+  const inviteCode = inviteRequired ? required('CANTOBRIDGE_INVITE_CODE') : null;
+  if (inviteRequired && inviteCode.length < 16) throw new Error('CANTOBRIDGE_INVITE_CODE must contain at least 16 characters');
   const port = Number(env.PORT ?? 10000);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PORT');
   const maxAccounts = Number(env.CANTOBRIDGE_MAX_ACCOUNTS ?? 50);
@@ -30,7 +31,7 @@ export function deploymentConfig(env = process.env) {
     turnApiToken = required('CLOUDFLARE_TURN_API_TOKEN');
   } else throw new Error('Unsupported CANTOBRIDGE_TURN_PROVIDER');
   return {
-    port, origin: parsed.origin, inviteCode, maxAccounts,
+    port, origin: parsed.origin, inviteRequired, inviteCode, maxAccounts,
     supabaseUrl: required('SUPABASE_URL'), supabaseKey: required('SUPABASE_SECRET_KEY'),
     turnProvider, turn, turnKeyId, turnApiToken,
     trustProxy: env.RENDER === 'true',

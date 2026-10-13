@@ -27,5 +27,5 @@ services:
         sync: false
       - key: CANTOBRIDGE_TURN_CREDENTIAL
         sync: false
-      - key: CANTOBRIDGE_INVITE_CODE
-        generateValue: true
+      - key: CANTOBRIDGE_INVITE_REQUIRED
+        value: "false"

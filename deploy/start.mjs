@@ -36,7 +36,7 @@ export async function startDeployment({ config, storage, iceProvider, now = () =
   });
   const backendOrigin = `http://127.0.0.1:${app.server.address().port}`;
   const handler = createRequestHandler({ backendOrigin, publicOnly: true });
-  const gate = createAccessGate({ code: config.inviteCode, origin: config.origin, secure: config.origin.startsWith('https:'), now });
+  const gate = createAccessGate({ enabled: config.inviteRequired === true, code: config.inviteCode, origin: config.origin, secure: config.origin.startsWith('https:'), now });
   const allowTraffic = createWindowLimiter({ max: 600, now });
   const allowUpgrade = createWindowLimiter({ max: 30, now });
   const sockets = new Set();

@@ -84,3 +84,12 @@
 - WebRTC getStats 最多等待两秒；超时或拒绝返回 statsUnavailable，保留基本通话状态，不输出原始错误或凭证。
 - 验证：后端 193、前端 582、根目录 40，共 815 项全部通过；npm run check 与 git diff --check 通过。
 - 需要用户在 Render 手动部署最新提交后，在苹果设备检查长卡片、展开报告、连续刷新及横竖屏；本轮未操作用户浏览器或完成苹果真机验收。
+
+
+## 2026-10-13 取消网站入口口令（making it better）
+
+- 默认直接进入首页；已有 CANTOBRIDGE_INVITE_CODE 环境变量不会再次开启口令页，无需用户删除旧变量。
+- 可选的邀请保护仅在 CANTOBRIDGE_INVITE_REQUIRED=true 时启用；Blueprint 默认 false。
+- 保留账号、房间成员、来源限制、流量限制与 50 账号上限；测试验证无邀请 cookie 的真实 HTTP 与 WebSocket 路径。
+- 全量测试后端 193、前端 582、根目录 42，共 817 项全部通过，无跳过；npm run check 和 git diff --check 通过。
+- 待用户在 Render 手动部署最新提交，再用无痕窗口确认打开链接后直接进入首页。

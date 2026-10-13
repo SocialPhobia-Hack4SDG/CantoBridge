@@ -5,7 +5,7 @@ import { createWindowLimiter } from '../deploy/limits.mjs';
 
 const env = { RENDER_EXTERNAL_URL: 'https://test.onrender.com', RENDER: 'true', SUPABASE_URL: 'https://test.supabase.co',
   SUPABASE_SECRET_KEY: 'test-only', CLOUDFLARE_TURN_KEY_ID: 'test-only', CLOUDFLARE_TURN_API_TOKEN: 'test-only',
-  CANTOBRIDGE_TURN_PROVIDER: 'cloudflare', CANTOBRIDGE_INVITE_CODE: 'test-only-invite-code' };
+  CANTOBRIDGE_TURN_PROVIDER: 'cloudflare', CANTOBRIDGE_INVITE_REQUIRED: 'true', CANTOBRIDGE_INVITE_CODE: 'test-only-invite-code' };
 
 test('Render 自动域名可直接使用；缺少密钥、弱口令、无效端口和非 HTTPS 域名拒绝启动', () => {
   const config = deploymentConfig(env);
@@ -50,5 +50,14 @@ test('Metered 静态凭证部署不要求 Cloudflare key，保留所有 UDP、TC
   }
   for (const url of ['https://example.test', 'stun:example.test', 'turn:user:password@example.test:443', 'turn:example.test/path']) {
     assert.throws(() => deploymentConfig({ ...configured, CANTOBRIDGE_TURN_URL: url }), /TURN_URL/);
+  }
+});
+
+
+test('默认开放网站入口，旧邀请口令不再启用保护，也无需设置口令', () => {
+  for (const CANTOBRIDGE_INVITE_CODE of [undefined, '', 'old-code']) {
+    const config = deploymentConfig({ ...env, CANTOBRIDGE_INVITE_REQUIRED: undefined, CANTOBRIDGE_INVITE_CODE });
+    assert.equal(config.inviteRequired, false);
+    assert.equal(config.inviteCode, null);
   }
 });

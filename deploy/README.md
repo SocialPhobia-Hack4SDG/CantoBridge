@@ -18,7 +18,7 @@
 
 在 Metered TURN Server 页面创建 Credential，并打开 Instructions / Show ICE Servers Array。复制所有以 `turn:` / `turns:` 开头的 `urls`，以逗号拼成一个环境变量；不包含 `stun:`，后端另有默认 STUN 配置。将 `username` 和 `credential`（Password）分别填入下面的用户名和密码变量。使用 Dashboard 给出的实际服务器地址，不照抄文档示例，不把 JSON 对象或引号填入 URL 变量。不需要 Show API Key，也不需要 Developers 的账户级 Secret key。
 
-凭证仅从 Render 环境变量读取，经邀请保护和账号鉴权后下发给浏览器。此档位使用共享静态 TURN 凭证；响应 `expiresAt` 是客户端缓存期限，不是静态密码自动到期时间。不要将凭证提交仓库；受邀用户在浏览器可以读取使用通话所必需的 TURN 凭证，内测后在 Metered 撤销或轮换它们。邀请码和限流不能绝对防止凭证被复制。达到免费额度可能中断中继，需要检查余额；不能用模拟动画替代真实通话验收。
+凭证仅从 Render 环境变量读取，经账号鉴权后下发给浏览器。此档位使用共享静态 TURN 凭证；响应 `expiresAt` 是客户端缓存期限，不是静态密码自动到期时间。不要将凭证提交仓库；通话用户在浏览器可以读取使用通话所必需的 TURN 凭证，内测后在 Metered 撤销或轮换它们。限流不能绝对防止凭证被复制。达到免费额度可能中断中继，需要检查余额；不能用模拟动画替代真实通话验收。
 
 Cloudflare 临时签发代码保留为可选适配，但默认 Blueprint 不使用它。不要在本次部署填写 Cloudflare key 或开通付费。
 
@@ -49,17 +49,18 @@ Cloudflare 临时签发代码保留为可选适配，但默认 Blueprint 不使�
 | `CANTOBRIDGE_TURN_URL` | Metered 提供的所有 TURN / TURNS URL，以逗号分隔 |
 | `CANTOBRIDGE_TURN_USERNAME` | Credential 的 Username |
 | `CANTOBRIDGE_TURN_CREDENTIAL` | Credential 的 Password / credential |
-| `CANTOBRIDGE_INVITE_CODE` | Blueprint 自动生成；手动部署时生成至少 16 字符随机口令 |
+| `CANTOBRIDGE_INVITE_REQUIRED` | 默认 `false`，直接开放网站入口 |
+| `CANTOBRIDGE_INVITE_CODE` | 默认无需设置；仅主动启用邀请保护（上一项为 `true`）时需要至少 16 字符随机口令 |
 | `CANTOBRIDGE_MAX_ACCOUNTS` | `50` |
 | `NODE_VERSION` | `22` |
 
 Render 自动提供 `PORT`、`RENDER` 和 `RENDER_EXTERNAL_URL`。默认只允许该 HTTPS 域名；若以后使用自定义域名，将 `PUBLIC_ORIGIN` 设置为那个 HTTPS 域名（不带路径）。无需买域名、申请本地证书或创建第二个公网后端。
 
-部署成功后记录 Render 实际分配的固定 URL。把这个链接与邀请口令直接提供给评委和内测用户；不要把口令写在公开仓库。邀请 cookie 有效七天，HttpOnly、Secure、SameSite=Lax；更换口令会让旧 cookie 失效。
+部署成功后记录 Render 实际分配的固定 URL。把链接直接提供给评委和内测用户，无需提供邀请口令。已部署服务中旧的 `CANTOBRIDGE_INVITE_CODE` 可以保留或删除，单独设置它不会启用入口保护；若此前设置过 `CANTOBRIDGE_INVITE_REQUIRED=true`，请改成 `false` 并重新部署。可选邀请模式的 cookie 有效七天，HttpOnly、Secure、SameSite=Lax。
 
 ## 4. 验收
 
-1. 未输入口令时仅看得到内测入口，API 和 WebSocket 不能绕过口令；开发接口返回 404。
+1. 不输入口令即可打开首页；账号 API 和 WebSocket 仍校验账号与房间权限，开发接口返回 404。
 2. 两个不同浏览器注册、填写资料、匹配，实际说话能互相听见，切卡同步，结束后各自有历史。
 3. 一个设备用 Wi-Fi，另一个用手机流量，重复真实通话；检查确实使用真实通话而不是模拟动画。另测试拒绝麦克风、断线、刷新和再次进入。
 4. 保存个人资料与积分后，在没有进行中通话时手动重新部署。再次打开仍认出账号，资料、积分和历史不丢；旧排队和旧通话不继续。
@@ -72,6 +73,6 @@ Render 自动提供 `PORT`、`RENDER` 和 `RENDER_EXTERNAL_URL`。默认只允�
 
 Render 免费运行时间、带宽和构建额度有限；闲置 15 分钟后休眠，唤醒约一分钟。免费本地磁盘不持久，所有账号数据必须由 Supabase 保存。不要使用 30 天到期的 Render 免费 Postgres 替代本方案。未添加付款方式时，Render 超额可能暂停服务。Supabase Free 低活跃七天可能暂停，免费版没有自动备份，需要在项目 Dashboard 定期导出并妥善保管。
 
-邀请口令只限制访问范围。设备密钥属于账号凭证，不提供给别人，不在页面公开展示。旧本地短设备 ID 不导入公网环境；公网新账号使用密码学随机值。此方案用于少量受邀用户，没有正式邮箱登录、密码找回或多实例扩展能力。
+入口默认开放，可选邀请口令只限制访问范围。设备密钥属于账号凭证，不提供给别人，不在页面公开展示。旧本地短设备 ID 不导入公网环境；公网新账号使用密码学随机值。此方案用于小规模内测，没有正式邮箱登录、密码找回或多实例扩展能力。
 
 官方参考：[Render Free](https://render.com/docs/free)、[Render Blueprint](https://render.com/docs/blueprint-spec)、[Supabase API keys](https://supabase.com/docs/guides/api/api-keys)、[Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)、[Metered TURN quickstart](https://www.metered.ca/docs/turn-server-service/quickstart/)。实际免费开通条件以账户页面为准。

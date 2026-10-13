@@ -8,9 +8,9 @@ const { WebSocket } = createRequire(new URL('../backend/package.json', import.me
 const ORIGIN = 'https://cloud.example.test';
 const INVITE = 'test-only-long-invitation';
 
-async function fixture(t, { storage = memoryStorage(), maxAccounts = 50, turn = null } = {}) {
+async function fixture(t, { storage = memoryStorage(), maxAccounts = 50, turn = null, inviteRequired = true } = {}) {
   const deployment = await startDeployment({
-    config: { port: 0, origin: ORIGIN, inviteCode: INVITE, maxAccounts, trustProxy: false, turn }, storage,
+    config: { port: 0, origin: ORIGIN, inviteRequired, inviteCode: INVITE, maxAccounts, trustProxy: false, turn }, storage,
     iceProvider: turn ? null : async () => ({ iceServers: [{ urls: ['turns:test.example:443'], username: 'test-user', credential: 'test-short-key' }], expiresAt: new Date(Date.now() + 3_600_000).toISOString() }),
   });
   t.after(() => deployment.close());
@@ -18,9 +18,9 @@ async function fixture(t, { storage = memoryStorage(), maxAccounts = 50, turn = 
   async function access(code = INVITE) {
     return fetch(base + '/_access', { method: 'POST', redirect: 'manual', headers: { origin: ORIGIN, 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ code }) });
   }
-  const response = await access();
-  assert.equal(response.status, 303);
-  const setCookie = response.headers.get('set-cookie');
+  const response = inviteRequired ? await access() : null;
+  if (response) assert.equal(response.status, 303);
+  const setCookie = response?.headers.get('set-cookie') ?? '';
   const cookie = setCookie.split(';')[0];
   async function api(path, { method = 'GET', body, token, cookieOverride = cookie, origin = ORIGIN } = {}) {
     const response = await fetch(base + path, {
@@ -210,4 +210,24 @@ test('Metered 凭证通过已鉴权的公网 ICE 接口下发，不在页面或�
   assert.deepEqual(result.body.data.iceServers.find(server => server.username === turn.username), turn);
   const page = await (await fetch(ui.base, { headers: { cookie: ui.cookie } })).text();
   assert.equal(page.includes(turn.credential), false);
+});
+
+
+test('开放入口不需要邀请 cookie，账户和房间鉴权与来源限制仍生效', async t => {
+  const ui = await fixture(t, { inviteRequired: false });
+  const page = await fetch(ui.base);
+  const html = await page.text();
+  assert.equal(page.status, 200);
+  assert.match(html, /type="module"/);
+  assert.doesNotMatch(html, /Invitation code/);
+  assert.equal((await ui.api('/api/me')).status, 401);
+  assert.equal((await ui.api('/api/rtc/ice-servers')).status, 401);
+  const a = await ui.signIn('open-a'); const b = await ui.signIn('open-b');
+  await ui.cloud.runRequest(() => ui.app.db.createRoom({ roomId: 'open-call', status: 'active', initiatorAccountId: a.userId, peerAccountId: b.userId }));
+  assert.equal((await ui.api('/api/me', { token: a.token })).status, 200);
+  assert.equal((await ui.api('/api/me', { token: a.token, origin: 'https://evil.example.test' })).status, 403);
+  assert.equal(await handshake(ui.base, '/ws/rooms/open-call', { token: a.token }), 101);
+  assert.equal(await handshake(ui.base, '/ws/rooms/open-call', { token: 'invalid' }), 401);
+  assert.equal(await handshake(ui.base, '/ws/match', { token: a.token, origin: 'https://evil.example.test' }), 403);
+  assert.equal((await fetch(ui.base + '/.env')).status, 403);
 });
