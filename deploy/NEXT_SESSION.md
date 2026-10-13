@@ -12,7 +12,7 @@
 - Cloudflare 要求绑定付款方式，用户拒绝，本次不再使用。
 - Metered 的 20 GB 免费档位也要求绑卡。用户选择可免绑卡开通的 500 MB Free Trial Global，并报告已找到 Username / Password。还需从 Show ICE Servers Array 取得实际 TURN 地址。
 - 默认部署已改为 Metered 静态凭证，使用 `CANTOBRIDGE_TURN_PROVIDER=static` 与 URL / Username / Credential 三个变量。API Key 不需要；Supabase 密钥和 TURN 密码由用户直接填入 Render，不经过聊天。
-- 下一步从 Render 连接仓库和配置环境变量继续。以下旧的 Cloudflare 待办已作废。
+- 下一步从 Render 连接仓库和配置环境变量继续；下方尚未完成清单与继续顺序已同步改为 Metered 静态凭证流程。
 - 改用 Metered 后回归结果：后端 193、前端 582、根目录 28，共 803 项全部通过；文档与接口检查通过。仍未部署或验证真实中继通话。
 
 ## 目标与进度判断
@@ -28,7 +28,7 @@
 - Supabase 快照适配与初始化 SQL；RLS / grants 禁止浏览器角色读取或修改。
 - 串行请求、数据库 revision 比较保存、保存成功后回包与广播；失败时回滚内存并停写。
 - 云服务重启保留账号、资料、积分、伙伴关系与历史，清理旧排队和进行中房间。
-- Cloudflare TURN 临时凭证签发与账号缓存，长期 token 不进入浏览器。
+- 静态 TURN 凭证按账号鉴权下发（当前使用 Metered 免绑卡档位），Cloudflare 临时签发保留为可选适配，长期密钥不进入浏览器。
 - 全站邀请口令、签名 HttpOnly / Secure cookie、账号上限、请求和信令连接限制。
 - 房间资料、话题卡及信令增加参与者检查；原结算和反馈检查保留。
 - 新设备密钥和会话令牌改为密码学随机值，旧本地存档保持兼容；公网不接受旧短设备 ID。
@@ -37,14 +37,14 @@
 
 ## 尚未完成，不能宣称已上线
 
-- [ ] 用户确认 Render、Supabase、Cloudflare 已登录。最后看到 Render 控制台已登录；Supabase 有 Free 组织但尚未建立本项目数据库；Cloudflare 登录尚未确认。
+- [ ] 用户确认 Render、Supabase、Metered 已登录。最后看到 Render 控制台已登录；Supabase 有 Free 组织但尚未建立本项目数据库；Metered 免费档位已开通并取得凭证。
 - [ ] 用户在 Supabase 新建专属 CantoBridge Free 项目（建议靠近香港的区域），自行设置数据库密码；不复用其它项目用户数据。
 - [ ] 在该项目 SQL Editor 执行 `deploy/supabase.sql`，确认表与函数创建成功，并检查 anon / authenticated 无权限。
 - [ ] 获取 Supabase 项目 URL 与服务端 secret key，只填入 Render Environment；不要发在聊天或提交仓库。
-- [ ] 用户在 Cloudflare Realtime TURN 创建 key，确认免费使用和超额费用边界；保存 key ID 与 API token 到 Render。
+- [ ] 用户在 Metered 创建 TURN Credential，确认免绑卡额度；从 Show ICE Servers Array 复制 TURN / TURNS 地址，把地址、Username、Password 填入 Render。
 - [ ] 用户连接 Render 到 GitHub 仓库，使用 Blueprint 或手动创建 **一个 Free Web Service**，关闭自动部署。
 - [ ] 核对所有环境变量，完成首次部署，记录实际固定 HTTPS 地址与邀请口令。当前没有可交付的公网 URL。
-- [ ] 使用实际 Supabase / Cloudflare 服务验证保存和凭证签发；目前自动测试使用本地 PostgreSQL及模拟远端响应，不能替代云端验收。
+- [ ] 使用实际 Supabase / Metered 服务验证保存和凭证签发；目前自动测试使用本地 PostgreSQL及模拟远端响应，不能替代云端验收。
 - [ ] 两个不同设备注册、匹配、真正听到对方声音、同步翻卡并结算；一台 Wi-Fi、一台手机流量。
 - [ ] 数据保存后在空闲时重启 / 重新部署，确认资料与历史恢复。
 - [ ] 关闭本机服务及电脑，另一台设备仍能通过公网地址访问与通话。
@@ -54,7 +54,7 @@
 ## 下次按这个顺序继续
 
 1. Supabase 项目和初始化 SQL。
-2. Cloudflare TURN key，确认没有付费承诺。
+2. Metered TURN 凭证，确认免绑卡 500 MB 档位与实际服务器地址。
 3. Render 连接仓库与环境配置，首次部署。
 4. 云端数据、跨网络语音及关机后访问验收。
 
@@ -64,7 +64,7 @@
 
 - Render 闲置会休眠，首次访问可能等待约一分钟；免费额度耗尽或供应商故障会影响服务。
 - Supabase 低活跃项目可能暂停，需在后台恢复；应定期自行导出备份。
-- Cloudflare 1,000 GB/月免费额度不等于硬性费用上限，不绑定付费或接受升级前须核对实际账户设置；邀请保护不能保证绝对不超额。
+- Metered 500 MB Free Trial 额度只够演示与初步验证，额度耗尽会中断中继，须在 Dashboard 核对实际套餐与重置规则；免费档位不构成长期容量承诺。
 - 数据快照适配仅支持小规模单实例，不要让第二个服务或预览环境共用同一份快照。
 - 重启会中断正在进行的通话和排队；已保存历史与进度保留。
 - 登录仍依赖设备密钥，尚无正式邮箱认证、跨设备找回。清浏览器数据会丢失账号访问入口。
@@ -111,3 +111,11 @@
 - 页面html lang同步当前语言，注册与后续页面沿用选择；个人页继续提供语言切换。
 - 修复电脑首页标题强制单行、插图520px固定宽、卡片340px最小列宽等溢出风险，按钮和页头允许自然换行。
 - 自动测试：后端193、前端583、根目录45，共821项通过。Windows实际字体与显示缩放仍需用户部署后真机检查。
+
+
+## 2026-10-13 部署文档与示例一致性修复（making it better）
+
+- 交接清单里残留的 Cloudflare 待办已改为 Metered 静态凭证流程：登录确认、TURN 凭证创建、云端验收和额度边界说明不再指向已放弃的 Cloudflare Realtime。
+- `.env.example` 补上 `CANTOBRIDGE_INVITE_REQUIRED`；新增测试确保示例文件覆盖 `deploy/config.mjs` 读取的每个变量，仅豁免平台自动注入（`RENDER`、`RENDER_EXTERNAL_URL`）与 Cloudflare 可选适配两项。
+- `tests/publication.test.mjs` 里指向已不存在文件的示例路径改为根目录 `.env.example`；TODO 台账里过期的测试计数同步更新。
+- 验证：后端 193、前端 583、根目录 46，共 822 项全部通过；npm run check 与 git diff --check 通过。本轮只改文档与测试，未触碰部署行为。

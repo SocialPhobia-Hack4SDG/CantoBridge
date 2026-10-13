@@ -28,7 +28,7 @@ test('私人记忆、账号快照、证书、环境密钥和本地产物不会�
 
 test('环境示例、运行入口、锁文件和第三方许可证仍可提交', () => {
   for (const path of [
-    'backend/.env.example', 'frontend/.env.sample', 'backend/package-lock.json',
+    '.env.example', 'backend/package-lock.json',
     'backend/src/server.js', 'frontend/index.html',
     'frontend/tools/ToJyutping-LICENSE.txt',
   ]) assert.equal(ignored(path), false, path);
