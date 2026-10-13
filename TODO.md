@@ -18,7 +18,7 @@
 | 仓库 | Hack4SDG_2026，本地 git 已接 GitHub。注册相关改动先落在迭代验证分支 `frontend-real`，四个分支（`main` / `frontend-real` / `frontend` / `backend`）**都已同步到远端、且全部合流**；各分支的定位见根 README 的「分支一览」 |
 | 前端 | `frontend/`：零依赖 ES Module、**无构建步骤**，16 个路由 / 38 个组件 / 585 个测试全绿 |
 | 数据 | **默认档位就是真后端**（直接开 `http://localhost:4173/`）：35 个方法打到 `8787`，只剩 3 个后置方法降级到 mock。要纯模拟数据加 `?api=mock`（`?api=http` 与默认档位等价，保留给旧脚本与书签） |
-| 后端 | `backend/` 已落地。Phase 0 ~ Phase 4 的 REST 主线完成，**37 个契约端点里 34 个已实现（92%），193 条用例全绿**；实时信令 `/ws/match` 与 `/ws/rooms/:roomId` 已接上（引入 `ws` 依赖） |
+| 后端 | `backend/` 已落地。Phase 0 ~ Phase 4 的 REST 主线完成，**37 个契约端点里 34 个已实现（92%），194 条用例全绿**；实时信令 `/ws/match` 与 `/ws/rooms/:roomId` 已接上（引入 `ws` 依赖） |
 | 账号 | **账号按设备现场长出来**（`deviceId` 是钥匙）：没见过的 `deviceId` 就建账号，见过的就复用。所以「谁注册了，另一台设备就看得见谁」，不再有固定演示账号 |
 | 你的目标 | 打开 `http://localhost:4173/`（后端在 `8787`），整条 5 分钟 happy path 走真数据。`frontend/tools/e2e-real.mjs` 已用真后端跑通 17/17（2026-10-04 复测） |
 | 硬节点 | 2026-10-06 功能冻结 · **2026-10-09 23:59 产品完成** · 2026-10-18 交 pitch deck |
