@@ -1,64 +1,61 @@
 # CantoBridge
 
-**Speak Cantonese. Meet Hong Kong.**
+### Speak Cantonese. Meet Hong Kong.
 
-CantoBridge brings Cantonese learners and Cantonese speakers together for relaxed, one-to-one voice conversations. Meet someone who shares your interests, explore everyday topics, and practise at your own pace.
+**A conversation can be the beginning of belonging.**
 
-You do not need perfect Cantonese or a prepared script. Conversation cards help you find your first words and keep the chat going.
+CantoBridge connects Cantonese learners with Cantonese speakers through one-to-one voice conversations. Shared interests, multilingual topic cards, and pronunciation support turn the first hello into an opportunity to practise, connect, and discover everyday life in Hong Kong.
 
-**[Open CantoBridge](https://cantobridge.onrender.com)**
+**[Try CantoBridge](https://cantobridge.onrender.com)**
+
+## Why CantoBridge?
+
+Learning a language also means finding people to speak it with. For someone new to Hong Kong, everyday Cantonese can open doors to friendships, local culture, and a stronger sense of connection.
+
+CantoBridge gives learners a welcoming place to practise with real people. Cantonese speakers join as conversation buddies, sharing their language while connecting with people who can help them practise Mandarin or English. Both sides bring something to the conversation.
 
 ## Who is it for?
 
-- **Cantonese Learners:** practise speaking with a real person, with pronunciation and translation support.
-- **Cantonese Buddies:** help someone practise Cantonese while sharing your interests and everyday life. You can also connect with learners who want to help you practise Mandarin or English.
+- **Cantonese Learners:** newcomers to Hong Kong and anyone who wants to build confidence in everyday Cantonese.
+- **Cantonese Buddies:** Cantonese speakers who enjoy meeting people, sharing local culture, and exchanging language skills.
 
-## Get started
+## What you can do
 
-1. Open the website and select **Get Started**. No invitation code is needed.
-2. Create your account. There is no password to remember; your browser remembers your account on this device.
-3. Choose your role, add your language background and interests, and decide which profile details others can see.
-4. Go to **Match** or choose an available recommended partner on your home page.
-5. Allow microphone access when prompted, and start talking.
-
-Matching depends on other people being available. For a first try with a friend, open the website on two devices and choose complementary roles: one Learner and one Buddy.
-
-## Inside a conversation
-
-- **Voice only:** talk one-to-one without turning on a camera. Headphones help prevent echo.
-- **Shared topic cards:** both partners can follow the same card. Cards include Cantonese, Jyutping pronunciation, Mandarin, and English.
-- **Useful phrases:** save expressions you would like to practise again.
-- **Simple controls:** mute your microphone, control playback, or end the call whenever you need to.
-- **Connection help:** use **Reconnect** if the call disconnects. Expand **Call check** to view connection information when troubleshooting.
-
-Topic cards currently come from a prepared collection; they are not generated live during your conversation.
-
-## Keep coming back
-
-Review your conversation history and progress, send partner requests, and earn points and achievements through participation. Use the Points Shop to unlock available avatars, frames, and colour themes.
-
-Learners and Cantonese Buddies have separate weekly and monthly rankings. Complete at least 30 seconds of calls in the selected period to qualify; your rank updates after the call ends and reflects conversation XP earned in that role.
-
-The interface supports **English, Simplified Chinese, and Traditional Chinese**, with five colour themes, including a night theme.
-
-## Your account and privacy
-
-Your account is linked to the browser you use. Return with the same browser on the same device to continue. Clearing website data, using a private browsing session, or signing out can remove your access to that account. Account recovery and transferring an account to another device are not currently available.
-
-You can choose which profile details to share and enable anonymous mode to hide your username and user ID from other users. Turning off profile details does not hide your avatar and name unless anonymous mode is also enabled.
-
-## If something does not work
-
-| What you notice | What to try |
+| Feature | Your experience |
 | --- | --- |
-| The website takes a while to open | Wait about a minute and try again. The free hosting service may need to wake up after being idle. |
-| No partner is available | Keep waiting, try later, or arrange a time with a friend. |
-| Your partner cannot hear you | Check the microphone permission and mute button. Confirm that the browser is using the correct microphone. |
-| You cannot hear your partner | Check playback, device volume, and the selected speaker or headphones. Tap the page if the browser requires a gesture to start audio. |
-| A call disconnects | Check both devices' internet connections and select Reconnect. If needed, leave the call and start a new one. |
+| **Interest-based matching** | Find conversation partners through shared interests and language goals. |
+| **One-to-one voice conversations** | Practise speaking and listening with a real person, without a camera. |
+| **Shared multilingual topic cards** | Explore prompts in Cantonese, Mandarin, and English, with Jyutping pronunciation support. Both partners follow the same card as they chat. |
+| **Saved expressions** | Collect useful phrases to revisit and practise. |
+| **Partner connections** | Send partner requests and build connections beyond a single conversation. |
+| **Progress and achievements** | Review your conversation history, practice time, points, and milestones. |
+| **Separate role rankings** | Join weekly and monthly leaderboards for Learners and Cantonese Buddies, with each role's conversation activity counted separately. |
+| **Personalisation** | Use points to unlock avatars, frames, and colour themes. Choose from five themes, including a night theme. |
+| **Profile visibility controls** | Choose which profile details to share, or enable anonymous mode. |
 
-## About this version
+The interface is available in **English, Simplified Chinese, and Traditional Chinese**.
 
-CantoBridge is a hackathon prototype available for small-scale testing. It is free to try, with an initial limit of 50 device accounts. Availability and calls depend on free service allowances; temporary interruptions can occur, and a service restart can end an active call.
+## Start your first conversation
 
-Try a short conversation first, share feedback with the project team, and help us make practising Cantonese more welcoming.
+1. **Open CantoBridge** and select **Get Started**.
+2. **Create your account**, then choose Cantonese Learner or Cantonese Buddy.
+3. **Introduce yourself** with your language background, interests, and profile visibility preferences.
+4. **Find a partner** through the matching lobby or your recommended partners.
+5. **Allow microphone access** and start a voice conversation. Use the shared topic cards whenever you want a prompt.
+6. **Keep your progress** by saving expressions, reviewing your session, and connecting with your partner.
+
+Complete at least **30 seconds of conversation** in the selected week or month to qualify for your role's leaderboard. Rankings update after the call ends and are ordered by conversation XP earned in that role.
+
+## Explore it together
+
+For a hands-on demonstration, open CantoBridge on two devices. Create one Learner account and one Buddy account, complete both profiles, and connect through the matching flow.
+
+During the conversation, explore a shared topic card, try the pronunciation guidance, and save an expression. After ending the call, review each participant's progress and their separate role rankings.
+
+This journey brings together the core CantoBridge experience: **meet someone, find your words, and keep growing through conversation.**
+
+## Our purpose
+
+CantoBridge is a hackathon project exploring how language exchange can support learning and social inclusion. Its design brings together guided practice, reciprocal participation, and recognition of progress.
+
+Our aim is to make everyday Cantonese practice more approachable—and help people feel a little closer to the community around them.
