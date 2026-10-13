@@ -108,6 +108,33 @@ test('接受收到的申请：申请直接移除、伙伴出现；重复 request
   });
 });
 
+test('重复申请再接受：同一个 peer 不会在伙伴列表里出现两行', async () => {
+  await withServer(async (ui) => {
+    const peer = await aPeer(ui);
+    const token = await ui.signIn();
+
+    await ui.request('POST', '/api/dev/buddy-request', { token, body: { peerId: peer.peerId } });
+    const first = await ui.request('POST', `/api/me/buddy-requests/${peer.peerId}/accept`, {
+      token,
+      body: { requestId: 'dup-accept-1' },
+    });
+    assert.equal(first.status, 200);
+    assert.equal(first.json.data.buddy.peerId, peer.peerId);
+
+    // 同一个人又来一条申请（对方重新申请）：再接受不能写出第二行
+    await ui.request('POST', '/api/dev/buddy-request', { token, body: { peerId: peer.peerId } });
+    const second = await ui.request('POST', `/api/me/buddy-requests/${peer.peerId}/accept`, {
+      token,
+      body: { requestId: 'dup-accept-2' },
+    });
+    assert.equal(second.status, 200);
+    assert.equal(second.json.data.buddy.peerId, peer.peerId, '重复接受要回原有那行');
+
+    const buddies = await ui.request('GET', '/api/me/buddies', { token });
+    assert.equal(buddies.json.data.buddies.length, 1, '同一个人只能有一行伙伴');
+  });
+});
+
 test('拒绝收到的申请：申请直接移除、不成为伙伴；不存在 404', async () => {
   await withServer(async (ui) => {
     const peer = await aPeer(ui);
