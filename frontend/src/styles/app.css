@@ -2560,19 +2560,19 @@ button.phrase-text { cursor: pointer; }
     max-width: 1080px;
     min-height: calc(100dvh - 188px);
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(340px, .65fr);
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr);
     grid-template-rows: auto auto auto 1fr;
     column-gap: 72px;
     align-items: center;
   }
   .landing-logo { grid-column: 1; width: 150px; height: 150px; margin: 0 0 -8px; }
-  .landing-slogan { grid-column: 1; max-width: none; margin: 0; font-size: clamp(50px, 5vw, 64px); white-space: nowrap; }
-  .landing-art { grid-column: 1; width: 520px; margin: 8px 0 0; }
+  .landing-slogan { grid-column: 1; max-width: none; margin: 0; font-size: clamp(38px, 4.5vw, 60px); white-space: normal; overflow-wrap: anywhere; }
+  .landing-art { grid-column: 1; width: 100%; max-width: 520px; margin: 8px 0 0; }
   .landing-cards { grid-column: 2; grid-row: 1 / 4; align-self: center; grid-template-columns: 1fr; }
   .ability-card { min-height: 150px; padding: 28px; }
   .ability-card strong { font-size: 20px; }
   .ability-card .muted-note { font-size: 15px; }
-  .landing-actions { grid-column: 1 / -1; width: 380px; margin: 20px auto 0; }
+  .landing-actions { grid-column: 1 / -1; width: min(380px, 100%); margin: 20px auto 0; }
 }
 .leaderboard-empty-rule {
   margin: 3rem auto;
@@ -2621,3 +2621,17 @@ button.phrase-text { cursor: pointer; }
 /* Keep expanded checks bounded; the room itself remains scrollable on short screens. */
 .call-diagnostics { flex: none; min-width: 0; }
 .call-diagnostics-report { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+
+/* Language choice before registration; natural wrapping for wider Windows text. */
+.landing, .landing > *, .landing-cards > *, .top-bar-title { min-width: 0; }
+.landing-actions { flex-direction: column; gap: 14px; }
+.landing-language { width: 100%; text-align: center; }
+.landing-language .lang-switch { justify-content: center; gap: 8px; }
+.landing-language .pill { min-height: 44px; padding: 8px 12px; line-height: 1.4; }
+.landing-slogan, .ability-card strong, .ability-card .muted-note { overflow-wrap: anywhere; }
+.landing-actions .btn { height: auto; padding-block: 12px; line-height: 1.4; white-space: normal; }
+.top-bar { grid-template-columns: auto minmax(0, 1fr) auto; }
+.top-bar-title { text-align: center; overflow-wrap: anywhere; }
+@media (min-width: 900px) and (max-width: 1100px) {
+  .landing { column-gap: 32px; }
+}

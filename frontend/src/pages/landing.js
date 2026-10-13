@@ -5,7 +5,7 @@
 
 import { definePage } from '../app/page.js';
 import { FallbackBanner } from '../components/base.js';
-import { h } from '../lib/dom.js';
+import { h, pill } from '../lib/dom.js';
 
 export const LandingPage = definePage({
   name: 'LandingPage',
@@ -44,6 +44,14 @@ export const LandingPage = definePage({
       h(
         'div',
         { class: 'landing-actions' },
+        h('div', { class: 'landing-language' },
+          h('p', { class: 'muted-note', text: '简体中文 / 繁體中文 / English' }),
+          h('div', { class: 'lang-switch', attrs: { role: 'group', 'aria-label': 'Choose language' } },
+            [['zh-Hans', '简体中文'], ['zh-Hant', '繁體中文'], ['en', 'English']].map(([locale, label]) => pill(label, {
+              tone: (ctx.locale ?? ctx.store?.getState().locale) === locale ? 'accent' : 'neutral',
+              selected: (ctx.locale ?? ctx.store?.getState().locale) === locale,
+              onClick: () => { if (ctx.store.getState().locale !== locale) ctx.store.setLocale(locale); },
+            })))),
         // 只有一个入口：开始使用 → **注册**。**不再有「我是粤语母语者，想帮手」这条捷径**：
         // 身份在注册之后自己选，落地页不预设、也不分流。
         // 先过注册页而不是直接进身份选择：账号是用户点「注册」那一刻才建出来的，

@@ -656,7 +656,8 @@ test('落地页：只有「开始使用」一个入口，没有「我是粤语�
   const labels = node.walk().filter((item) => item.tagName === 'BUTTON').map((item) => item.textContent);
   assert.ok(labels.some((label) => label.includes('开始使用')), '主按钮是「开始使用」');
   assert.equal(labels.some((label) => label.includes('演示控制台')), false, '普通用户入口不暴露开发控制台');
-  assert.equal(labels.length, 1, '落地页只保留一个明确主按钮，实际：' + labels.join(' / '));
+  assert.equal(node.querySelectorAll('.btn-primary').length, 1, '落地页保留一个注册入口');
+  assert.equal(node.querySelector('.landing-language').querySelectorAll('button').length, 3, '注册前可选择三种语言');
   assert.equal(labels.some((label) => label.includes('粤语母语者')), false, '不该再有身份捷径按钮');
   assert.equal(node.textContent.includes('landing.login'), false, '不该出现已删除文案的裸 key');
 });

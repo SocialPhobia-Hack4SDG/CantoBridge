@@ -360,6 +360,7 @@ export function createApp({
     const activeStore = isDemo ? demo.store : store;
     const state = activeStore.getState();
     const locale = state.locale;
+    doc.documentElement?.setAttribute?.('lang', locale);
     const t = createTranslator(locale);
     const label = (group, value) => labelOf(group, value, locale);
 

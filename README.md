@@ -37,7 +37,7 @@ The interface is available in **English, Simplified Chinese, and Traditional Chi
 
 ## Start your first conversation
 
-1. **Open CantoBridge** and select **Get Started**.
+1. **Open CantoBridge**, choose English, Simplified Chinese, or Traditional Chinese, and select **Get Started**. Your language preference is remembered for your next visit.
 2. **Create your account**, then choose Cantonese Learner or Cantonese Buddy.
 3. **Introduce yourself** with your language background, interests, and profile visibility preferences.
 4. **Find a partner** through the matching lobby or your recommended partners.
