@@ -1,5 +1,14 @@
 # 公网部署交接 · 2026-10-13
 
+## 最新进展 · 用户自行操作浏览器
+
+- 用户已报告 Supabase 初始化 SQL 执行成功，并找到 Project URL 和服务端 Secret key；尚未由运行中的后端验证实际连接。
+- Cloudflare 要求绑定付款方式，用户拒绝，本次不再使用。
+- Metered 的 20 GB 免费档位也要求绑卡。用户选择可免绑卡开通的 500 MB Free Trial Global，并报告已找到 Username / Password。还需从 Show ICE Servers Array 取得实际 TURN 地址。
+- 默认部署已改为 Metered 静态凭证，使用 `CANTOBRIDGE_TURN_PROVIDER=static` 与 URL / Username / Credential 三个变量。API Key 不需要；Supabase 密钥和 TURN 密码由用户直接填入 Render，不经过聊天。
+- 下一步从 Render 连接仓库和配置环境变量继续。以下旧的 Cloudflare 待办已作废。
+- 改用 Metered 后回归结果：后端 193、前端 582、根目录 28，共 803 项全部通过；文档与接口检查通过。仍未部署或验证真实中继通话。
+
 ## 目标与进度判断
 
 本轮属于 **making it exist**：建立一个不依赖本机开机的免费公网内测版本。现有产品功能的权限与凭证改进属于 making it better。

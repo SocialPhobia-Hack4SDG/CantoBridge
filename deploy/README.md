@@ -12,13 +12,15 @@
 
 数据库读取失败或数据结构损坏时启动失败，不自动清空数据。保存失败、超时或版本冲突时停止业务写入、健康检查变为 503，须修复连接后重启。请求可能已在远端保存但响应丢失；恢复后先核对数据。启动会清理旧队列和未完成房间；已结束房间及用户历史保留。
 
-## 2. Cloudflare：创建 TURN key
+## 2. Metered：无需绑卡的 TURN 配置
 
-在 Cloudflare Dashboard 的 Realtime / TURN 中创建 key，保存 TURN key ID 和对应 API token 到 Render 环境变量。
+用户实际开通的是 Metered Free Trial Global 500 MB 档位，无需绑卡。20 GB 档位和 Cloudflare Realtime 在本账户开通流程均要求付款方式，所以本方案不使用它们。500 MB 仅作为演示和初步通话验证额度，持续内测须观察实际剩余流量，不能保证长期够用；以 Dashboard 的实际套餐与重置规则为准。
 
-后端通过官方 API 为登录用户签发一小时有效的 ICE 凭证，短暂按账号缓存。长期 API token 留在后端，浏览器仅收到短期 TURN 凭证。TURN 不可用时接口返回 `turn_unavailable`；客户端可能降级模拟，必须实际听到对方声音才能算语音验收成功。
+在 Metered TURN Server 页面创建 Credential，并打开 Instructions / Show ICE Servers Array。复制所有以 `turn:` / `turns:` 开头的 `urls`，以逗号拼成一个环境变量；不包含 `stun:`，后端另有默认 STUN 配置。将 `username` 和 `credential`（Password）分别填入下面的用户名和密码变量。使用 Dashboard 给出的实际服务器地址，不照抄文档示例，不把 JSON 对象或引号填入 URL 变量。不需要 Show API Key，也不需要 Developers 的账户级 Secret key。
 
-当前 Cloudflare Realtime SFU / TURN 共享每月 1,000 GB 免费额度，超额按官方规则计费。**免费额度不是硬性费用上限**。只启用免费使用，保持账户未授权付费；如果开通流程要求绑卡、升级或无法确认超额是否收费，先停下，不接受付费承诺。观察使用量并及时停用或撤销 TURN key，邀请口令、账号上限与请求限制只能减少滥用，不能保证绝对不超额。
+凭证仅从 Render 环境变量读取，经邀请保护和账号鉴权后下发给浏览器。此档位使用共享静态 TURN 凭证；响应 `expiresAt` 是客户端缓存期限，不是静态密码自动到期时间。不要将凭证提交仓库；受邀用户在浏览器可以读取使用通话所必需的 TURN 凭证，内测后在 Metered 撤销或轮换它们。邀请码和限流不能绝对防止凭证被复制。达到免费额度可能中断中继，需要检查余额；不能用模拟动画替代真实通话验收。
+
+Cloudflare 临时签发代码保留为可选适配，但默认 Blueprint 不使用它。不要在本次部署填写 Cloudflare key 或开通付费。
 
 ## 3. Render：部署一个免费服务
 
@@ -43,8 +45,10 @@
 | --- | --- |
 | `SUPABASE_URL` | Supabase 项目 URL |
 | `SUPABASE_SECRET_KEY` | Supabase 服务端 secret key / service_role |
-| `CLOUDFLARE_TURN_KEY_ID` | Cloudflare TURN key ID |
-| `CLOUDFLARE_TURN_API_TOKEN` | Cloudflare TURN key API token |
+| `CANTOBRIDGE_TURN_PROVIDER` | `static` |
+| `CANTOBRIDGE_TURN_URL` | Metered 提供的所有 TURN / TURNS URL，以逗号分隔 |
+| `CANTOBRIDGE_TURN_USERNAME` | Credential 的 Username |
+| `CANTOBRIDGE_TURN_CREDENTIAL` | Credential 的 Password / credential |
 | `CANTOBRIDGE_INVITE_CODE` | Blueprint 自动生成；手动部署时生成至少 16 字符随机口令 |
 | `CANTOBRIDGE_MAX_ACCOUNTS` | `50` |
 | `NODE_VERSION` | `22` |
@@ -70,4 +74,4 @@ Render 免费运行时间、带宽和构建额度有限；闲置 15 分钟后休
 
 邀请口令只限制访问范围。设备密钥属于账号凭证，不提供给别人，不在页面公开展示。旧本地短设备 ID 不导入公网环境；公网新账号使用密码学随机值。此方案用于少量受邀用户，没有正式邮箱登录、密码找回或多实例扩展能力。
 
-官方参考：[Render Free](https://render.com/docs/free)、[Render Blueprint](https://render.com/docs/blueprint-spec)、[Supabase API keys](https://supabase.com/docs/guides/api/api-keys)、[Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)、[Cloudflare TURN credentials](https://developers.cloudflare.com/realtime/turn/generate-credentials/)、[Realtime pricing](https://developers.cloudflare.com/realtime/sfu/platform/pricing/)。
+官方参考：[Render Free](https://render.com/docs/free)、[Render Blueprint](https://render.com/docs/blueprint-spec)、[Supabase API keys](https://supabase.com/docs/guides/api/api-keys)、[Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)、[Metered TURN quickstart](https://www.metered.ca/docs/turn-server-service/quickstart/)。实际免费开通条件以账户页面为准。

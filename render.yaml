@@ -19,9 +19,13 @@ services:
         sync: false
       - key: SUPABASE_SECRET_KEY
         sync: false
-      - key: CLOUDFLARE_TURN_KEY_ID
+      - key: CANTOBRIDGE_TURN_PROVIDER
+        value: static
+      - key: CANTOBRIDGE_TURN_URL
         sync: false
-      - key: CLOUDFLARE_TURN_API_TOKEN
+      - key: CANTOBRIDGE_TURN_USERNAME
+        sync: false
+      - key: CANTOBRIDGE_TURN_CREDENTIAL
         sync: false
       - key: CANTOBRIDGE_INVITE_CODE
         generateValue: true

@@ -15,10 +15,24 @@ export function deploymentConfig(env = process.env) {
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PORT');
   const maxAccounts = Number(env.CANTOBRIDGE_MAX_ACCOUNTS ?? 50);
   if (!Number.isInteger(maxAccounts) || maxAccounts < 2 || maxAccounts > 500) throw new Error('Invalid account limit');
+  const turnProvider = env.CANTOBRIDGE_TURN_PROVIDER || 'static';
+  let turn = null;
+  let turnKeyId = null;
+  let turnApiToken = null;
+  if (turnProvider === 'static') {
+    const urls = required('CANTOBRIDGE_TURN_URL').split(',').map(value => value.trim()).filter(Boolean);
+    if (!urls.length || urls.some(value => !/^turns?:[^\s,@/?]+(?::\d+)?(?:\?transport=(?:udp|tcp))?$/.test(value))) {
+      throw new Error('CANTOBRIDGE_TURN_URL must contain comma-separated TURN or TURNS URLs');
+    }
+    turn = { urls, username: required('CANTOBRIDGE_TURN_USERNAME'), credential: required('CANTOBRIDGE_TURN_CREDENTIAL') };
+  } else if (turnProvider === 'cloudflare') {
+    turnKeyId = required('CLOUDFLARE_TURN_KEY_ID');
+    turnApiToken = required('CLOUDFLARE_TURN_API_TOKEN');
+  } else throw new Error('Unsupported CANTOBRIDGE_TURN_PROVIDER');
   return {
     port, origin: parsed.origin, inviteCode, maxAccounts,
     supabaseUrl: required('SUPABASE_URL'), supabaseKey: required('SUPABASE_SECRET_KEY'),
-    turnKeyId: required('CLOUDFLARE_TURN_KEY_ID'), turnApiToken: required('CLOUDFLARE_TURN_API_TOKEN'),
+    turnProvider, turn, turnKeyId, turnApiToken,
     trustProxy: env.RENDER === 'true',
   };
 }

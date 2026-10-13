@@ -17,7 +17,7 @@ export async function startDeployment({ config, storage, iceProvider, now = () =
   const allowIce = createWindowLimiter({ max: 20, windowMs: 60 * 60_000, now });
   const app = createServer({
     db: cloud.db, now, corsOrigins: [config.origin], devRoutes: false, exposeErrors: false,
-    runRequest: cloud.runRequest, iceProvider,
+    runRequest: cloud.runRequest, iceProvider, turn: config.turn ?? null,
     requestPolicy({ path, token, body }) {
       if (!allowApi(token ?? 'anonymous')) throw new ApiError('rate_limited', 'please try again later');
       if (path === '/api/auth/session') {
@@ -103,7 +103,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try {
     const config = deploymentConfig();
     const storage = createSupabaseSnapshotStore({ url: config.supabaseUrl, key: config.supabaseKey });
-    const iceProvider = createCloudflareIceProvider({ keyId: config.turnKeyId, apiToken: config.turnApiToken });
+    const iceProvider = config.turnProvider === 'cloudflare'
+      ? createCloudflareIceProvider({ keyId: config.turnKeyId, apiToken: config.turnApiToken }) : null;
     const deployment = await startDeployment({ config, storage, iceProvider });
     console.log('CantoBridge cloud service ready at ' + config.origin);
     let stopping = false;

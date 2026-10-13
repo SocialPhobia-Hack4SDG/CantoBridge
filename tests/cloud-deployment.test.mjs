@@ -8,10 +8,10 @@ const { WebSocket } = createRequire(new URL('../backend/package.json', import.me
 const ORIGIN = 'https://cloud.example.test';
 const INVITE = 'test-only-long-invitation';
 
-async function fixture(t, { storage = memoryStorage(), maxAccounts = 50 } = {}) {
+async function fixture(t, { storage = memoryStorage(), maxAccounts = 50, turn = null } = {}) {
   const deployment = await startDeployment({
-    config: { port: 0, origin: ORIGIN, inviteCode: INVITE, maxAccounts, trustProxy: false }, storage,
-    iceProvider: async () => ({ iceServers: [{ urls: ['turns:test.example:443'], username: 'test-user', credential: 'test-short-key' }], expiresAt: new Date(Date.now() + 3_600_000).toISOString() }),
+    config: { port: 0, origin: ORIGIN, inviteCode: INVITE, maxAccounts, trustProxy: false, turn }, storage,
+    iceProvider: turn ? null : async () => ({ iceServers: [{ urls: ['turns:test.example:443'], username: 'test-user', credential: 'test-short-key' }], expiresAt: new Date(Date.now() + 3_600_000).toISOString() }),
   });
   t.after(() => deployment.close());
   const base = `http://127.0.0.1:${deployment.server.address().port}`;
@@ -198,4 +198,16 @@ test('单个账号不能无限建立信令连接，关闭旧连接后可以重�
   assert.equal(await handshake(ui.base, '/ws/match', { cookie: ui.cookie, token: account.token }), 429);
   await new Promise(resolve => { sockets[0].once('close', resolve); sockets[0].close(); });
   assert.equal(await handshake(ui.base, '/ws/match', { cookie: ui.cookie, token: account.token }), 101);
+});
+
+test('Metered 凭证通过已鉴权的公网 ICE 接口下发，不在页面或未登录请求中暴露', async t => {
+  const turn = { urls: ['turn:relay.example.test:80', 'turns:relay.example.test:443?transport=tcp'], username: 'metered-test-user', credential: 'metered-test-password' };
+  const ui = await fixture(t, { turn });
+  const account = await ui.signIn('metered');
+  assert.equal((await ui.api('/api/rtc/ice-servers')).status, 401);
+  const result = await ui.api('/api/rtc/ice-servers', { token: account.token });
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.body.data.iceServers.find(server => server.username === turn.username), turn);
+  const page = await (await fetch(ui.base, { headers: { cookie: ui.cookie } })).text();
+  assert.equal(page.includes(turn.credential), false);
 });
