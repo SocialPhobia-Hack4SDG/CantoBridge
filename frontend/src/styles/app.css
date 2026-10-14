@@ -1926,6 +1926,10 @@ button.phrase-text { cursor: pointer; }
   cursor: pointer;
 }
 
+/* 「连线记录」等行内入口沿用「积分商城」入口的反馈：抬起阴影 + 轻微缩放。 */
+@media (hover: hover) { .row-item:hover { box-shadow: var(--shadow-raised); } }
+.row-item:active { transform: scale(.99); }
+
 .profile-head {
   display: flex;
   align-items: center;

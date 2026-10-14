@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 
 import { installDom, StubElement } from './helpers/dom-stub.mjs';
 
@@ -1271,4 +1272,22 @@ test('三个全屏面板互斥：谁开着就渲染谁，全关了回到普通�
   node = route.page.render(ctx, ctx.view);
   assert.equal(node.classList.contains('sheet-fullscreen'), false, '没有面板时要渲染正常页面');
   assert.ok(node.querySelector('.profile-forms'), '正常页面里两个入口还在');
+});
+
+test('「我的」页入口复用积分商城那套悬停 / 按下反馈', () => {
+  const css = readFileSync(new URL('../src/styles/app.css', import.meta.url), 'utf8');
+  assert.ok(
+    css.includes('@media (hover: hover) { .profile-shop-entry:hover { box-shadow: var(--shadow-raised); } }'),
+    '积分商城入口是这套反馈的基准',
+  );
+  for (const selector of ['.profile-forms > .card', '.row-item']) {
+    assert.ok(
+      css.includes(`@media (hover: hover) { ${selector}:hover { box-shadow: var(--shadow-raised); } }`),
+      `${selector} 悬停时要和积分商城入口一样抬起阴影`,
+    );
+    assert.ok(
+      css.includes(`${selector}:active { transform: scale(.99); }`),
+      `${selector} 按下时要和积分商城入口一样轻微缩放`,
+    );
+  }
 });
