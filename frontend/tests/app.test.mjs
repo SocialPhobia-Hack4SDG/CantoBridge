@@ -682,7 +682,7 @@ test('兜底：刷新后房间不在了，给横幅并回到匹配大厅', async
   assert.ok(ui.has('.fallback-banner'), '横幅组件没有渲染');
 });
 
-test('界面语言：入口在我的设置，切换后整页重渲染并保存', async () => {
+test('界面语言：入口在我的设置，切换后整站文案立即生效且留在面板原地', async () => {
   const ui = await boot();
   assert.ok(ui.text().includes(zh('app.slogan')));
   assert.equal(ui.has('.top-bar .lang-switch'), false);
@@ -692,6 +692,14 @@ test('界面语言：入口在我的设置，切换后整页重渲染并保存',
 
   await ui.clickButton('繁體中文');
   assert.equal(ui.store.getState().locale, 'zh-Hant');
+  // 改语言要整页重渲染（外壳文案得立刻换），但人必须留在设置面板里：曾经这里会把人
+  // 踢回「我的」主界面，因为重渲染把 view.local 连同面板开关一起丢了。
+  assert.ok(ui.has('.settings-fullscreen'), '切换语言后设置面板应当还在原地');
+  assert.equal(ui.one('.language-card .is-selected').textContent, '繁體中文');
+  assert.ok(ui.text().includes(createTranslator('zh-Hant')('me.settings')));
+
+  await ui.click('.settings-close');
+  assert.equal(ui.has('.settings-fullscreen'), false, '关闭后应当回到「我的」主界面');
   await ui.goto('/');
   assert.ok(ui.text().includes(createTranslator('zh-Hant')('app.slogan')), '繁体中文字文案没有生效');
   assert.ok(ui.text().includes(createTranslator('zh-Hant')('landing.getStarted')));
@@ -700,11 +708,34 @@ test('界面语言：入口在我的设置，切换后整页重渲染并保存',
   await ui.click('.profile-settings');
   await ui.clickButton('English');
   assert.equal(ui.store.getState().locale, 'en');
-  await ui.click('.profile-settings');
-  assert.equal(ui.root.querySelector('.language-card .is-selected').textContent, 'English');
+  assert.ok(ui.has('.settings-fullscreen'), '切换语言后设置面板应当还在原地');
+  assert.equal(ui.one('.language-card .is-selected').textContent, 'English');
+  await ui.click('.settings-close');
   await ui.goto('/');
   assert.ok(ui.text().includes(en('app.slogan')), '英文文案没有生效');
   assert.ok(ui.text().includes(en('landing.getStarted')));
+});
+
+test('切换语言不闪骨架屏、不重取一份数据（旧数据先顶上）', async () => {
+  const calls = [];
+  const ui = await boot({
+    hash: '#/me',
+    apiWrapper: (api) => ({ ...api, getMe: (...args) => { calls.push('getMe'); return api.getMe(...args); } }),
+  });
+  await flush();
+  const initial = calls.length;
+  await ui.click('.profile-settings');
+  assert.ok(ui.has('.settings-fullscreen'));
+
+  ui.button('繁體中文').click();
+  // 同步这一帧就已经是新语言 + 面板还在，而且没有退回骨架屏
+  assert.equal(ui.has('.settings-fullscreen'), true, '重渲染这一帧面板就该还在');
+  assert.equal(ui.has('.skeleton'), false, '带着旧数据重渲染，不该闪骨架屏');
+  await flush();
+  assert.equal(ui.has('.settings-fullscreen'), true);
+  assert.equal(ui.one('.language-card .is-selected').textContent, '繁體中文');
+  // 旧数据只是「先顶上」，接口照拉一次
+  assert.equal(calls.length, initial + 1, '重渲染后应当只重新取一次数');
 });
 
 test('兜底路由：任何不存在的路径都有页面，不留白屏', async () => {
