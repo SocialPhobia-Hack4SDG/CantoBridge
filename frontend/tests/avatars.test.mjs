@@ -32,8 +32,8 @@ test('我的页直接修改外观：取消不写入，失败保留草稿，重�
     } }) });
     await flush();
     const before = structuredClone(ui.store.getState()[role === 'buddy' ? 'buddyProfile' : 'learnerProfile']);
-    assert.equal(ui.root.querySelector('.profile-settings').getAttribute('open'), null, '设置默认收起');
-    assert.equal(ui.root.querySelector('.profile-account').getAttribute('open'), null, '账号默认收起');
+    assert.equal(ui.has('.settings-fullscreen'), false, '设置面板默认不打开');
+    assert.equal(ui.has('.account-fullscreen'), false, '账号面板默认不打开');
     await ui.click('.profile-avatar-button');
     const choose = () => ui.root.walk().find(node => node.getAttribute('data-avatar-option') === 'female').click();
     choose(); await flush();

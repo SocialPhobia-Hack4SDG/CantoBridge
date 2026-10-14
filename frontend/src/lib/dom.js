@@ -113,6 +113,8 @@ export const ICON_GLYPHS = {
   speaker: '▲',
   hangup: '×',
   next: '›',
+  settings: '⚙',
+  person: '👤',
 };
 
 export function clear(element) {

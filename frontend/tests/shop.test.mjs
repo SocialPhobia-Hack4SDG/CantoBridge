@@ -260,6 +260,7 @@ test('商城所有主题零积分兑换后出现在我的设置，切换后刷�
   const ctx = { store, api, view, t: createTranslator('zh-Hans'), locale: 'zh-Hans', label: (group, value) => value,
     getState: () => store.getState(), paint() {}, watch() {}, navigate() {} };
   view.data = await ProfilePage.load(ctx);
+  view.local.settingsExpanded = true;
   const settings = ProfilePage.render(ctx, view);
   const options = settings.querySelectorAll('.theme-option');
   assert.equal(options.length, 5);

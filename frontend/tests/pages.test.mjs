@@ -1188,6 +1188,7 @@ test('我的页设置：匿名默认关闭，且开关会送服务端', async ()
   const ctx = fakeCtx({ role: 'learner', data });
   const calls = [];
   spyApi(ctx, 'saveSettings', calls);
+  ctx.view.local.settingsExpanded = true;
   const node = route.page.render(ctx, ctx.view);
 
   const toggle = node.querySelectorAll('.switch')[0];
@@ -1204,4 +1205,68 @@ test('我的页设置：匿名默认关闭，且开关会送服务端', async ()
   await flush();
   assert.equal(ctx.store.getState().locale, 'en');
   assert.deepEqual(calls[1], [{ locale: 'en' }], '语言选择同步到设置接口');
+});
+
+test('设置与账号入口同一行，点开是整页内置面板（齿轮 / 人像图标）', async () => {
+  const route = ROUTES.find((item) => item.page.name === 'ProfilePage');
+  const ctx = fakeCtx({ data: { progress: {}, history: [], me: {}, buddies: [], requests: [] } });
+  let node = route.page.render(ctx, ctx.view);
+
+  const forms = node.querySelector('.profile-forms');
+  assert.ok(forms, '设置与账号入口要包在同一行容器里');
+  const entries = forms.querySelectorAll('button');
+  assert.equal(entries.length, 2, '入口就是两个按钮');
+  assert.equal(entries[0].classList.contains('profile-settings'), true);
+  assert.equal(entries[1].classList.contains('profile-account'), true);
+  const { ICON_GLYPHS } = await import('../src/lib/dom.js');
+  const settingsIcon = entries[0].querySelector('.entry-symbol .icon');
+  const accountIcon = entries[1].querySelector('.entry-symbol .icon');
+  assert.equal(settingsIcon.dataset.icon, 'settings', '设置入口要挂齿轮图标');
+  assert.equal(settingsIcon.textContent, ICON_GLYPHS.settings);
+  assert.equal(accountIcon.dataset.icon, 'person', '账号入口要挂人像图标');
+  assert.equal(accountIcon.textContent, ICON_GLYPHS.person);
+  assert.equal(entries[0].getAttribute('aria-haspopup'), 'dialog');
+
+  entries[0].click();
+  node = route.page.render(ctx, ctx.view);
+  assert.equal(node.getAttribute('role'), 'dialog');
+  assert.equal(node.classList.contains('sheet-fullscreen'), true);
+  assert.equal(node.classList.contains('settings-fullscreen'), true);
+  assert.ok(node.querySelector('.sheet-fullscreen-head'), '面板要有共用标题栏');
+  assert.ok(node.querySelector('.theme-card .theme-switch'), '设置面板里要有配色主题卡');
+  assert.ok(node.querySelector('.language-card .lang-switch'), '设置面板里要有语言切换');
+  assert.equal(node.querySelectorAll('.switch').length, 1, '设置面板里要有匿名开关');
+  node.querySelector('.settings-close').click();
+  assert.equal(ctx.view.local.settingsExpanded, false, '关闭按钮要回写标志');
+
+  entries[1].click();
+  node = route.page.render(ctx, ctx.view);
+  assert.equal(node.classList.contains('account-fullscreen'), true);
+  assert.equal(node.querySelector('.settings-fullscreen'), null, '两个面板不该同时出现');
+  assert.ok(node.querySelector('.account-close'), '账号面板也要有共用关闭按钮');
+  node.dispatch('keydown', { key: 'Escape' });
+  assert.equal(ctx.view.local.accountExpanded, false, 'Esc 要能关掉面板');
+});
+
+test('三个全屏面板互斥：谁开着就渲染谁，全关了回到普通页面', () => {
+  const route = ROUTES.find((item) => item.page.name === 'ProfilePage');
+  const ctx = fakeCtx({ data: { progress: {}, history: [], me: {}, buddies: [], requests: [] } });
+
+  ctx.view.local.achievementsExpanded = true;
+  let node = route.page.render(ctx, ctx.view);
+  assert.equal(node.classList.contains('achievement-fullscreen'), true);
+  node.dispatch('keydown', { key: 'Escape' });
+  assert.equal(ctx.view.local.achievementsExpanded, false);
+
+  ctx.view.local.settingsExpanded = true;
+  node = route.page.render(ctx, ctx.view);
+  assert.equal(node.classList.contains('settings-fullscreen'), true);
+  node.dispatch('keydown', { key: 'Tab' });
+  node.dispatch('keydown', { key: 'Tab', shiftKey: true });
+  node.dispatch('keydown', { key: 'Escape' });
+  assert.equal(ctx.view.local.settingsExpanded, false);
+
+  node = route.page.render(ctx, ctx.view);
+  assert.equal(node.classList.contains('sheet-fullscreen'), false, '没有面板时要渲染正常页面');
+  assert.ok(node.querySelector('.profile-forms'), '正常页面里两个入口还在');
 });

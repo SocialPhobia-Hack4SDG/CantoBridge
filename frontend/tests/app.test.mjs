@@ -369,6 +369,7 @@ test('退出并换人：「我的」页退出后换掉账号，并且能重新�
   assert.deepEqual(calls, ['learner'], '已注册的设备进「我的」＝启动就登录');
 
   // 二次确认：第一下只是展开，不该真退出（退出会清掉本机账号，误触代价很大）
+  await ui.click('.profile-account');
   await ui.clickButton(zh('account.signOut'));
   assert.equal(ui.store.deviceId(), firstDevice, '第一下只是展开确认，不该动账号');
   assert.ok(ui.text().includes(zh('account.signOutHint')), '确认态要说清后果');
@@ -686,6 +687,7 @@ test('界面语言：入口在我的设置，切换后整页重渲染并保存',
   assert.ok(ui.text().includes(zh('app.slogan')));
   assert.equal(ui.has('.top-bar .lang-switch'), false);
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   assert.ok(ui.has('.language-card .lang-switch'));
 
   await ui.clickButton('繁體中文');
@@ -695,8 +697,10 @@ test('界面语言：入口在我的设置，切换后整页重渲染并保存',
   assert.ok(ui.text().includes(createTranslator('zh-Hant')('landing.getStarted')));
 
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   await ui.clickButton('English');
   assert.equal(ui.store.getState().locale, 'en');
+  await ui.click('.profile-settings');
   assert.equal(ui.root.querySelector('.language-card .is-selected').textContent, 'English');
   await ui.goto('/');
   assert.ok(ui.text().includes(en('app.slogan')), '英文文案没有生效');
@@ -762,6 +766,7 @@ test('配色主题：入口只在「我的」页，切一次就整站换色且�
   assert.equal(ui.doc.documentElement.getAttribute('data-theme'), 'mint', '冷启动就要把主题写到 <html>');
 
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   assert.ok(ui.has('.theme-card'), '「我的」页没有配色主题卡');
   assert.ok(ui.has('.theme-card .theme-switch'), '配色主题卡里没有切换器');
 
@@ -786,6 +791,7 @@ test('配色主题：入口只在「我的」页，切一次就整站换色且�
 test('配色主题：「我的」页与演示控制台两处互相同步', async () => {
   const ui = await boot();
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   await ui.clickButton(zh('theme.warm'));
   assert.equal(ui.store.getState().settings.theme, 'warm');
 
@@ -801,6 +807,7 @@ test('配色主题：「我的」页与演示控制台两处互相同步', async
   await ui.goto('/dev/mock');
   await ui.clickButton(zh('theme.warm'));
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   assert.equal(
     ui.one('.theme-card .theme-option.theme-warm').classList.contains('is-selected'),
     true,
@@ -1080,6 +1087,7 @@ test('退出并换人：匹配频道要跟着关掉（令牌只在握手时校�
     assert.equal(sockets.length, 1, '进受保护页面应当连上匹配频道');
     sockets[0].open();
 
+    await ui.click('.profile-account');
     await ui.clickButton(zh('account.signOut'));
     await ui.clickButton(zh('account.confirmYes'));
     await flush();
