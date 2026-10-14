@@ -94,7 +94,12 @@ export function icon(name, { size = 24, className = 'icon' } = {}) {
   const sheet = globalThis.CANTOBRIDGE_ICONS ?? {};
   const node = h('span', { class: className, 'aria-hidden': 'true', style: { width: size + 'px', height: size + 'px' } });
   node.dataset.icon = name;
-  node.textContent = sheet[name] ?? ICON_GLYPHS[name] ?? '';
+  const glyph = sheet[name] ?? ICON_GLYPHS[name];
+  if (glyph === undefined && ICON_SVG[name]) {
+    node.innerHTML = `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" aria-hidden="true" focusable="false">${ICON_SVG[name]}</svg>`;
+  } else {
+    node.textContent = glyph ?? '';
+  }
   return node;
 }
 
@@ -114,7 +119,14 @@ export const ICON_GLYPHS = {
   hangup: '×',
   next: '›',
   settings: '⚙',
-  person: '👤',
+};
+
+/** emoji 自带颜色、吃不到 currentColor（人像 U+1F464 常被渲染成灰蓝 emoji），
+ * 这类图标改用内联 SVG，fill=currentColor，颜色跟随所在元素。 */
+const ICON_SVG = {
+  person:
+    '<path d="M12 12.6a4.3 4.3 0 1 0 0-8.6 4.3 4.3 0 0 0 0 8.6Z"/>' +
+    '<path d="M12 14.4c-4.2 0-7.6 2.3-7.6 5.1 0 .8.6 1.3 1.4 1.3h12.4c.8 0 1.4-.5 1.4-1.3 0-2.8-3.4-5.1-7.6-5.1Z"/>',
 };
 
 export function clear(element) {

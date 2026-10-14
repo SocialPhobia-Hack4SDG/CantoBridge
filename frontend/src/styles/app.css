@@ -19,6 +19,9 @@
 .profile-forms { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
 .profile-forms > .card { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 44px; padding: 16px 18px; text-align: left; cursor: pointer; }
 .profile-forms > .card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+/* 悬停/按下沿用「积分商城」入口的反馈：抬起阴影 + 轻微缩放。 */
+@media (hover: hover) { .profile-forms > .card:hover { box-shadow: var(--shadow-raised); } }
+.profile-forms > .card:active { transform: scale(.99); }
 .profile-forms .entry-symbol { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-strong); }
 .profile-forms .profile-settings-heading { flex: 1; min-width: 0; cursor: pointer; }
 .profile-forms .profile-settings-heading .section-title { display: inline; font-size: 18px; margin: 0; }
@@ -216,6 +219,9 @@ button {
   font-size: 18px;
   line-height: 1;
 }
+
+/* 字形图标用文本，SVG 图标（见 dom.js 的 ICON_SVG）撑满同一个盒子。 */
+.icon > svg { display: block; width: 100%; height: 100%; }
 
 .lang-switch {
   display: flex;

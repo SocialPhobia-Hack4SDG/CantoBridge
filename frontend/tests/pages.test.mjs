@@ -1224,7 +1224,9 @@ test('设置与账号入口同一行，点开是整页内置面板（齿轮 / �
   assert.equal(settingsIcon.dataset.icon, 'settings', '设置入口要挂齿轮图标');
   assert.equal(settingsIcon.textContent, ICON_GLYPHS.settings);
   assert.equal(accountIcon.dataset.icon, 'person', '账号入口要挂人像图标');
-  assert.equal(accountIcon.textContent, ICON_GLYPHS.person);
+  assert.equal(ICON_GLYPHS.person, undefined, '人像不能用 emoji 字形：emoji 自带颜色，会盖过 CSS color');
+  assert.match(accountIcon.innerHTML, /^<svg [^>]*fill="currentColor"[^>]*>/, '人像改走内联 SVG，颜色跟随 currentColor');
+  assert.ok(accountIcon.innerHTML.includes('<path'), '人像的 SVG 里要有路径');
   assert.equal(entries[0].getAttribute('aria-haspopup'), 'dialog');
 
   entries[0].click();
