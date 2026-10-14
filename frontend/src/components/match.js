@@ -271,6 +271,7 @@ export function MatchAcceptToast({
   totalSeconds = 10,
   title,
   hint = null,
+  showHint = false,
   acceptLabel,
   declineLabel,
   onAccept,
@@ -293,6 +294,7 @@ export function MatchAcceptToast({
       { class: 'match-toast-body' },
       h('strong', { class: 'match-toast-title', text: title }),
       h('span', { class: 'match-toast-name', text: peer?.anonymous ? anonymousLabel : (peer?.displayName ?? '') }),
+      showHint && hint ? h('p', { class: 'match-toast-hint muted-note', text: hint }) : null,
     ),
     h('span', { class: 'match-toast-count', text: String(remaining) }),
     h(

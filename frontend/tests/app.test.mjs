@@ -449,6 +449,8 @@ test('后台匹配：可以关掉，倒计时上限也能现场调', async () =>
   win.tick(3);
   await flush();
   assert.equal(store.getState().runtime.matchRequest, null, '关掉后台匹配后不该自动匹配到人');
+  assert.ok(ui.has('.demo-match-toast'), '关闭后台真人匹配仍可选择独立演示房间');
+  await ui.clickButton(zh('demo.keepWaiting'));
   assert.equal(ui.has('.match-toast'), false);
 
   // 手动救场入口仍然可用，而且倒计时上限跟着设置走

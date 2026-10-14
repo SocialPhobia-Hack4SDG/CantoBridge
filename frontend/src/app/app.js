@@ -16,7 +16,8 @@ import { createMatchSync } from './matchSync.js';
 import { ROUTES, findRoute } from './routes.js';
 import { createSocialSync } from './socialSync.js';
 import { createSession } from './session.js';
-import { createDemoRoom } from './demoRoom.js';
+import { createDemoRoom, demoPeer } from './demoRoom.js';
+import { createMatchFallback, DEMO_ACCEPT_MS } from './matchFallback.js';
 
 const DEFAULT_HASH = '#/';
 
@@ -41,6 +42,8 @@ export function createApp({
   const rooms = new Map();
   let bottomNav = null;
   let demo = null;
+  const matchFallback = createMatchFallback();
+  let enteringDemo = false;
   // 伙伴关系「打开即准」：启动拉一次、换身份再拉（失败静默，见 socialSync.js）
   const socialSync = createSocialSync({ api, store });
   // 登录引导：启动（及换身份时）先拿到令牌，见 session.js
@@ -186,6 +189,12 @@ export function createApp({
       return;
     }
     if (!state.runtime.queue || state.runtime.room) return;
+    const offer = matchFallback.sync(state, store.now());
+    if (offer && acceptCountdown(offer.expiresAt, store.now()) <= 0) {
+      await enterFallbackRoom();
+      return;
+    }
+    syncMatchToast();
     if (state.role !== 'learner') return;
     if (state.settings.backgroundMatch === false) return;
     if (store.now() - state.runtime.queue.joinedAt < MATCH_FOUND_AFTER_MS) return;
@@ -210,7 +219,29 @@ export function createApp({
   function syncMatchToast() {
     const slot = matchRunner.slot;
     if (!slot) return;
-    const request = store.getState().runtime.matchRequest;
+    const state = store.getState();
+    const request = state.runtime.matchRequest;
+    const offer = matchFallback.sync(state, store.now());
+    if (!request && offer) {
+      const remaining = acceptCountdown(offer.expiresAt, store.now());
+      const key = 'demo:' + offer.key;
+      if (matchRunner.toastKey !== key) {
+        const t = createTranslator(state.locale);
+        matchRunner.toastKey = key;
+        const toast = MatchAcceptToast({ peer: demoPeer(state), remaining, totalSeconds: DEMO_ACCEPT_MS / 1000,
+          title: t('demo.offerTitle'), hint: t('demo.offerHint'), showHint: true,
+          acceptLabel: t('demo.accept'), declineLabel: t('demo.keepWaiting'),
+          onAccept: () => void enterFallbackRoom(),
+          onDecline: () => { matchFallback.dismiss(); syncMatchToast(); },
+        });
+        toast.classList.add('demo-match-toast');
+        mount(slot, toast);
+      } else {
+        const count = slot.querySelector?.('.match-toast-count');
+        if (count) count.textContent = String(remaining);
+      }
+      return;
+    }
     if (!request) {
       if (matchRunner.toastKey !== null) {
         matchRunner.toastKey = null;
@@ -218,7 +249,6 @@ export function createApp({
       }
       return;
     }
-    const state = store.getState();
     const remaining = acceptCountdown(request.expiresAt, store.now());
     if (request.roomId !== matchRunner.toastKey) {
       const t = createTranslator(state.locale);
@@ -242,6 +272,28 @@ export function createApp({
     if (toastNode) {
       if (remaining <= URGENT_SECONDS) toastNode.classList.add('is-urgent');
       else toastNode.classList.remove('is-urgent');
+    }
+  }
+
+  async function enterFallbackRoom() {
+    const source = store.getState();
+    if (enteringDemo || matchRunner.working || !matchFallback.sync(source, store.now()) || source.runtime.matchRequest || source.runtime.room) return;
+    enteringDemo = true;
+    const hash = win.location.hash;
+    matchFallback.dismiss();
+    syncMatchToast();
+    try {
+      await api.leaveQueue();
+      const latest = store.getState();
+      // A live room, new queue, account change or navigation during cancellation wins.
+      if (latest.runtime.room || latest.runtime.queue || latest.runtime.matchRequest || latest.role !== source.role || latest.learnerProfile.userId !== source.learnerProfile.userId || win.location.hash !== hash) return;
+      demo = createDemoRoom(latest, { now: store.now });
+      navigate('/room/demo-preview');
+    } catch {
+      store.setNotice({ kind: 'banner', messageKey: 'demo.enterFailed', tone: 'warning' });
+      render(true);
+    } finally {
+      enteringDemo = false;
     }
   }
 
@@ -369,7 +421,6 @@ export function createApp({
     const matched = router.match(path);
     const route = findRoute(matched.route.path);
     const isDemo = route.guard === 'room' && matched.params.roomId === 'demo-preview';
-    if (isDemo && !allowSimulation) { win.location.replace('#/match'); return; }
     if (isDemo && (store.getState().runtime.queue || store.getState().runtime.room)) {
       win.location.replace('#/match');
       return;
@@ -439,7 +490,6 @@ export function createApp({
       demo: isDemo,
       allowSimulation: isDemo || allowSimulation,
       openDemoRoom: () => {
-        if (!allowSimulation) return;
         if (store.getState().runtime.queue || store.getState().runtime.room) return;
         demo = createDemoRoom(store.getState(), { now: store.now });
         navigate('/room/demo-preview');

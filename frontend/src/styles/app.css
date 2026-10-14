@@ -1378,6 +1378,15 @@ button.pill[aria-pressed='true'] {
   min-width: 0;
 }
 
+.demo-match-toast .match-toast-hint {
+  margin: var(--space-2) 0 0;
+  line-height: 1.5;
+}
+
+.demo-match-toast .match-toast-actions {
+  flex-wrap: wrap;
+}
+
 .match-toast-title {
   font-size: var(--text-sm);
 }
