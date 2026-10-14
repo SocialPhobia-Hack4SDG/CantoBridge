@@ -1165,7 +1165,11 @@ test('我的页大卡片进入商城，商城故障后返回我的', async () =>
   await flush();
   assert.ok(ui.text().includes(zh('shop.unavailable')), ui.text());
   assert.ok(ui.has('.state-block.is-error'));
-  await ui.click('.icon-btn');
+  // 商城左上角是带文字的显眼返回（和 onboarding 的退出键同一套外观），不是 44px 的返回箭头
+  assert.ok(ui.has('.exit-btn'), '商城页要有带文字的页头按钮');
+  assert.equal(ui.has('.icon-btn'), false, '商城页不再用返回箭头');
+  assert.ok(ui.one('.exit-btn').textContent.includes(zh('action.back')));
+  await ui.click('.exit-btn');
   assert.equal(ui.win.location.hash, '#/me');
   assert.ok(ui.has('.profile-shop-entry'));
   assert.equal(ui.has('.state-block.is-error'), false);

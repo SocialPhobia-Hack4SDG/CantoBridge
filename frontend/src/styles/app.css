@@ -190,8 +190,8 @@ button {
   height: 44px;
 }
 
-/* onboarding 的退出键：带文字的描边胶囊。
-   退出＝放弃本次填写并还原配置，是有后果的动作，所以给它文字与主色，不沿用 44px 的返回箭头。 */
+/* 页头带文字的描边胶囊：onboarding 的「退出」（有后果的动作）与 /shop 的显眼「返回」共用。
+   这两种入口都比 44px 的返回箭头更需要存在感，所以给它文字与主色。 */
 .exit-btn {
   display: inline-flex;
   align-items: center;

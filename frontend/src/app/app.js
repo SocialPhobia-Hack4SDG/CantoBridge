@@ -321,9 +321,21 @@ export function createApp({
 
   function topBarNode(route, ctx) {
     if (route.immersive) return null;
-    // onboarding 三页的左上角是「退出」（带文字），不是返回箭头：退出＝放弃本次填写并还原配置，
-    // 是个有后果的动作，做成描边按钮，别让它看起来像随手一退。
+    // 左上角按钮两种形态：默认是 44px 返回箭头；带文字的描边胶囊只留给两类入口——
+    // onboarding 三页的「退出」（放弃本次填写并还原配置，是有后果的动作），
+    // 以及 route.backLabelKey 点名的显眼返回（/shop，见 docs/03 4.2）。
+    // 这里保留 t('...') 字面量，好让 check-ui 的 key 扫描看得见 onboarding 这两个文案。
     const isOnboardingStep = Boolean(route.step);
+    const backLabel = isOnboardingStep
+      ? ctx.t('action.exit')
+      : route.backLabelKey
+        ? ctx.t(route.backLabelKey)
+        : null;
+    const backHint = isOnboardingStep
+      ? ctx.t('action.exitHint')
+      : route.backHintKey
+        ? ctx.t(route.backHintKey)
+        : null;
     const backHandler =
       route.back && route.path !== '/'
         ? isOnboardingStep
@@ -333,8 +345,8 @@ export function createApp({
     return h(TopBar, {
       title: ctx.t(route.titleKey ?? 'app.name'),
       onBack: backHandler,
-      backLabel: isOnboardingStep ? ctx.t('action.exit') : null,
-      backHint: isOnboardingStep ? ctx.t('action.exitHint') : null,
+      backLabel,
+      backHint,
       backAriaLabel: ctx.t('action.back'),
     });
   }
