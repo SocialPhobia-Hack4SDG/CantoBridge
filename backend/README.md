@@ -4,7 +4,7 @@
 > 现场断网、换机器都能直接起；实时信令用一个依赖（[`ws`](https://github.com/websockets/ws)），
 > 见下方「实时信令」。
 >
-> 当前阶段：**Phase 0 ~ Phase 4 全部完成，含实时信令**（37 个契约端点里已实现 34 个，193 条用例全绿，
+> 当前阶段：**Phase 0 ~ Phase 4 全部完成，含实时信令**（37 个契约端点里已实现 34 个，194 条用例全绿，
 > 见下方「已实现」；剩余 3 个是 APK 正式登录 2 个 + 版本策略，均不影响 Web demo）。
 > **两台真机已能互相看见并接通语音**（2026-10-01）。
 >
@@ -27,7 +27,7 @@ CANTOBRIDGE_CORS=https://example.com,https://foo.example.com npm start
 ```
 
 ```bash
-npm test                  # node --test：193 个，覆盖接口、信封、CORS、幂等、持久化、契约、信令、冒烟
+npm test                  # node --test：194 个，覆盖接口、信封、CORS、幂等、持久化、契约、信令、冒烟
 npm run smoke             # 一条命令验收 Phase 0+1：21 项检查，打印人能读的报告
 npm run check             # 契约校验：已实现路由 ↔ frontend/docs/10-api-v1.md
 npm run smoke:ws          # 真链路信令冒烟（需要前端 4173 与后端 8787 都在跑，见下）

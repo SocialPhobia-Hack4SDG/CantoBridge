@@ -80,6 +80,7 @@ export function createApp({
   let renderToken = 0;
   let current = null;
   let lastSignature = null;
+  let lastHash = null;
   let appliedTheme = null;
 
   /**
@@ -321,29 +322,47 @@ export function createApp({
 
   function topBarNode(route, ctx) {
     if (route.immersive) return null;
-    // onboarding 三页的左上角是「退出」（带文字），不是返回箭头：退出＝放弃本次填写并还原配置，
-    // 是个有后果的动作，做成描边按钮，别让它看起来像随手一退。
+    // 左上角按钮两种形态：默认是 44px 返回箭头；带文字的描边胶囊只留给两类入口——
+    // onboarding 三页的「退出」（放弃本次填写并还原配置，是有后果的动作），
+    // 以及 route.backLabelKey 点名的显眼返回（/shop，见 docs/03 4.2）。
+    // 这里保留 t('...') 字面量，好让 check-ui 的 key 扫描看得见 onboarding 这两个文案。
     const isOnboardingStep = Boolean(route.step);
+    const backLabel = isOnboardingStep
+      ? ctx.t('action.exit')
+      : route.backLabelKey
+        ? ctx.t(route.backLabelKey)
+        : null;
+    const backHint = isOnboardingStep
+      ? ctx.t('action.exitHint')
+      : route.backHintKey
+        ? ctx.t(route.backHintKey)
+        : null;
     const backHandler =
       route.back && route.path !== '/'
         ? isOnboardingStep
           ? () => leaveOnboarding()
-          : route.path === '/shop' ? () => navigate('/me') : () => win.history.back()
+          : route.backTo ? () => navigate(route.backTo) : () => win.history.back()
         : null;
     return h(TopBar, {
       title: ctx.t(route.titleKey ?? 'app.name'),
       onBack: backHandler,
-      backLabel: isOnboardingStep ? ctx.t('action.exit') : null,
-      backHint: isOnboardingStep ? ctx.t('action.exitHint') : null,
+      backLabel,
+      backHint,
       backAriaLabel: ctx.t('action.back'),
     });
   }
 
   function render(force = false) {
     const state0 = store.getState();
-    const signature = (win.location.hash || DEFAULT_HASH) + '|' + state0.locale;
+    const hash = win.location.hash || DEFAULT_HASH;
+    const signature = hash + '|' + state0.locale;
     if (!force && signature === lastSignature) return;
+    // 同一条路由、只是界面语言变了（见 start() 里的 locale 订阅）时，把上一份 view 原样
+    // 带过来：改语言不该把人从「我的」页的设置面板里踢回主界面，也不该再拉一次接口、
+    // 闪一次骨架屏。换路由则一律从头来。
+    const carry = hash === lastHash && current ? current.ctx.view : null;
     lastSignature = signature;
+    lastHash = hash;
     const token = ++renderToken;
     exitCurrent();
     const { path, query } = parseHash(win.location.hash || DEFAULT_HASH);
@@ -391,7 +410,15 @@ export function createApp({
     const bannerEl = h('div', { class: 'banner-slot' });
     const queueEl = h('div', { class: 'queue-status-slot' });
     const pageEl = h('div', { class: 'page', attrs: { 'data-page': route.name } });
-    const view = { data: null, error: null, loading: typeof route.page.load === 'function' };
+    const hasLoad = typeof route.page.load === 'function';
+    const view = {
+      data: carry ? carry.data ?? null : null,
+      error: null,
+      // 有旧数据就先用旧数据顶上，不摆骨架屏；load() 照跑，数据到了再静默换一次
+      loading: hasLoad && !carry?.data,
+    };
+    // 页面自己攒的本地状态（面板开没开、草稿、选中项）跟着过来，改语言才不掉现场
+    if (carry?.local) view.local = carry.local;
 
     const ctx = {
       el: pageEl,
@@ -457,7 +484,19 @@ export function createApp({
       store.setNotice({ ...notice, messageKey: null, shown: true });
     }
 
+    /**
+     * 语言切换带来的那次重渲染会把上一份 view 整份带过来（见 render() 的 carry）。
+     * 页面若在自己的 load() 里重建了 view.local（`ctx.view.local = { … }`），带过来的
+     * 面板开合、草稿这些本地状态会跟着被丢掉——这里补回去。只在「页面确实换掉了那个
+     * 对象」时补一次：之后页面自己的改动不会再被盖掉。
+     */
+    let carriedLocal = carry?.local ?? null;
+
     function paint() {
+      if (carriedLocal && view.local !== carriedLocal) {
+        view.local = { ...carriedLocal, ...view.local };
+        carriedLocal = null;
+      }
       view.t = t;
       const content = route.page.render(ctx, view);
       const demoSummary = isDemo && path.endsWith('/summary');
@@ -508,7 +547,8 @@ export function createApp({
     syncMatchToast();
     paint();
 
-    if (view.loading) {
+    // 带过来的只是「先顶上」的旧数据：接口照拉，拿到了再静默重绘一次
+    if (hasLoad) {
       loadPage(route, ctx, view, token, paint);
     }
   }

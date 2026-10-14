@@ -93,6 +93,11 @@ export class StubElement {
     this.ownText = String(value);
   }
 
+  // 读取时给回原始标记：测试里可以断言内联 SVG 之类的标记。
+  get innerHTML() {
+    return this.ownText;
+  }
+
   addEventListener(type, handler) {
     (this.listeners[type] ??= []).push(handler);
   }

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 
 import { installDom, StubElement } from './helpers/dom-stub.mjs';
 
@@ -178,6 +179,29 @@ test('成就墙四项预览，全屏十项，佩戴单称号可替换并卸下�
   const buddyCtx = fakeCtx({ role: 'buddy', data: { progress: {}, buddies: [], requests: [] }, local: { achievementsExpanded: true } });
   const buddyNode = route.page.render(buddyCtx, buddyCtx.view);
   assert.equal(buddyNode.querySelectorAll('.badge').length, 10);
+});
+
+test('个人页伙伴列表放在滚动窗口里，每个伙伴是带自己操作按钮的独立条目', () => {
+  const { node } = renderPage('ProfilePage', {
+    data: {
+      progress: { conversations: 2, totalMinutes: 46, streakDays: 3 }, history: [], me: {},
+      buddies: [{ peerId: 'ka-ho', label: 'ka-ho' }, { peerId: 'ming-chu', label: '明珠' }],
+      requests: [{ peerId: 'wai-ling', label: '匿名伙伴', direction: 'incoming', status: 'pending' }],
+    },
+  });
+  assert.ok(node.querySelector('.buddy-scroll'), '伙伴列表要包在滚动窗口里');
+  assert.ok(node.querySelector('.buddy-scroll .buddy-slot'), '滚动窗口里放的应该是伙伴列表');
+  const rows = node.querySelectorAll('.buddy-scroll .buddy-row');
+  assert.equal(rows.length, 3, '两个已连接的伙伴加一条收到的申请');
+  for (const row of rows) {
+    assert.ok(row.querySelectorAll('button').length >= 1, '每个伙伴条目都要带自己的操作按钮');
+  }
+});
+
+test('伙伴列表为空时，占位说明同样留在滚动窗口内', () => {
+  const { node } = renderPage('ProfilePage', { data: { progress: {}, history: [], me: {}, buddies: [], requests: [] } });
+  assert.ok(node.querySelector('.buddy-scroll .buddy-slot.is-empty'), '空状态不该跑到窗口外面');
+  assert.equal(node.querySelectorAll('.buddy-scroll .buddy-row').length, 0);
 });
 
 for (const entry of PAGES) {
@@ -1165,6 +1189,7 @@ test('我的页设置：匿名默认关闭，且开关会送服务端', async ()
   const ctx = fakeCtx({ role: 'learner', data });
   const calls = [];
   spyApi(ctx, 'saveSettings', calls);
+  ctx.view.local.settingsExpanded = true;
   const node = route.page.render(ctx, ctx.view);
 
   const toggle = node.querySelectorAll('.switch')[0];
@@ -1181,4 +1206,96 @@ test('我的页设置：匿名默认关闭，且开关会送服务端', async ()
   await flush();
   assert.equal(ctx.store.getState().locale, 'en');
   assert.deepEqual(calls[1], [{ locale: 'en' }], '语言选择同步到设置接口');
+});
+
+test('设置与账号入口同一行，点开是整页内置面板（齿轮 / 人像图标）', async () => {
+  const route = ROUTES.find((item) => item.page.name === 'ProfilePage');
+  const ctx = fakeCtx({ data: { progress: {}, history: [], me: {}, buddies: [], requests: [] } });
+  let node = route.page.render(ctx, ctx.view);
+
+  const forms = node.querySelector('.profile-forms');
+  assert.ok(forms, '设置与账号入口要包在同一行容器里');
+  const entries = forms.querySelectorAll('button');
+  assert.equal(entries.length, 2, '入口就是两个按钮');
+  assert.equal(entries[0].classList.contains('profile-settings'), true);
+  assert.equal(entries[1].classList.contains('profile-account'), true);
+  const { ICON_GLYPHS } = await import('../src/lib/dom.js');
+  const settingsIcon = entries[0].querySelector('.entry-symbol .icon');
+  const accountIcon = entries[1].querySelector('.entry-symbol .icon');
+  assert.equal(settingsIcon.dataset.icon, 'settings', '设置入口要挂齿轮图标');
+  assert.equal(settingsIcon.textContent, ICON_GLYPHS.settings);
+  assert.equal(accountIcon.dataset.icon, 'person', '账号入口要挂人像图标');
+  assert.equal(ICON_GLYPHS.person, undefined, '人像不能用 emoji 字形：emoji 自带颜色，会盖过 CSS color');
+  assert.match(accountIcon.innerHTML, /^<svg [^>]*fill="currentColor"[^>]*>/, '人像改走内联 SVG，颜色跟随 currentColor');
+  assert.ok(accountIcon.innerHTML.includes('<path'), '人像的 SVG 里要有路径');
+  assert.equal(entries[0].getAttribute('aria-haspopup'), 'dialog');
+
+  entries[0].click();
+  node = route.page.render(ctx, ctx.view);
+  assert.equal(node.getAttribute('role'), 'dialog');
+  assert.equal(node.classList.contains('sheet-fullscreen'), true);
+  assert.equal(node.classList.contains('settings-fullscreen'), true);
+  assert.ok(node.querySelector('.sheet-fullscreen-head'), '面板要有共用标题栏');
+  assert.ok(node.querySelector('.theme-card .theme-switch'), '设置面板里要有配色主题卡');
+  assert.ok(node.querySelector('.language-card .lang-switch'), '设置面板里要有语言切换');
+  assert.equal(node.querySelectorAll('.switch').length, 1, '设置面板里要有匿名开关');
+  const zh = createTranslator('zh-Hans');
+  const anonymousCard = node.querySelector('.privacy-card');
+  assert.ok(anonymousCard, '匿名开关要包在一张普通卡片里');
+  assert.equal(anonymousCard.querySelector('.privacy-row'), null, '.card 不能和 .privacy-row 叠在同一个元素上（会把卡片内边距冲掉）');
+  const anonymousCopy = anonymousCard.querySelector('.privacy-copy');
+  assert.ok(anonymousCopy, '「匿名模式」与灰色说明要一上一下堆叠');
+  assert.equal(anonymousCopy.querySelector('.privacy-label').textContent, zh('privacy.anonymous'));
+  assert.equal(anonymousCopy.querySelector('small.muted-note').textContent, zh('privacy.anonymousHint'));
+  node.querySelector('.settings-close').click();
+  assert.equal(ctx.view.local.settingsExpanded, false, '关闭按钮要回写标志');
+
+  entries[1].click();
+  node = route.page.render(ctx, ctx.view);
+  assert.equal(node.classList.contains('account-fullscreen'), true);
+  assert.equal(node.querySelector('.settings-fullscreen'), null, '两个面板不该同时出现');
+  assert.ok(node.querySelector('.account-close'), '账号面板也要有共用关闭按钮');
+  node.dispatch('keydown', { key: 'Escape' });
+  assert.equal(ctx.view.local.accountExpanded, false, 'Esc 要能关掉面板');
+});
+
+test('三个全屏面板互斥：谁开着就渲染谁，全关了回到普通页面', () => {
+  const route = ROUTES.find((item) => item.page.name === 'ProfilePage');
+  const ctx = fakeCtx({ data: { progress: {}, history: [], me: {}, buddies: [], requests: [] } });
+
+  ctx.view.local.achievementsExpanded = true;
+  let node = route.page.render(ctx, ctx.view);
+  assert.equal(node.classList.contains('achievement-fullscreen'), true);
+  node.dispatch('keydown', { key: 'Escape' });
+  assert.equal(ctx.view.local.achievementsExpanded, false);
+
+  ctx.view.local.settingsExpanded = true;
+  node = route.page.render(ctx, ctx.view);
+  assert.equal(node.classList.contains('settings-fullscreen'), true);
+  node.dispatch('keydown', { key: 'Tab' });
+  node.dispatch('keydown', { key: 'Tab', shiftKey: true });
+  node.dispatch('keydown', { key: 'Escape' });
+  assert.equal(ctx.view.local.settingsExpanded, false);
+
+  node = route.page.render(ctx, ctx.view);
+  assert.equal(node.classList.contains('sheet-fullscreen'), false, '没有面板时要渲染正常页面');
+  assert.ok(node.querySelector('.profile-forms'), '正常页面里两个入口还在');
+});
+
+test('「我的」页入口复用积分商城那套悬停 / 按下反馈', () => {
+  const css = readFileSync(new URL('../src/styles/app.css', import.meta.url), 'utf8');
+  assert.ok(
+    css.includes('@media (hover: hover) { .profile-shop-entry:hover { box-shadow: var(--shadow-raised); } }'),
+    '积分商城入口是这套反馈的基准',
+  );
+  for (const selector of ['.profile-forms > .card', '.row-item']) {
+    assert.ok(
+      css.includes(`@media (hover: hover) { ${selector}:hover { box-shadow: var(--shadow-raised); } }`),
+      `${selector} 悬停时要和积分商城入口一样抬起阴影`,
+    );
+    assert.ok(
+      css.includes(`${selector}:active { transform: scale(.99); }`),
+      `${selector} 按下时要和积分商城入口一样轻微缩放`,
+    );
+  }
 });

@@ -205,11 +205,12 @@ export function createSocialHandlers({ db, now = () => Date.now() }) {
       if (!request) throw new ApiError('not_found', 'no incoming request from ' + ctx.params.peerId);
 
       dropMirror(session, request);
-      const buddy = db.addBuddy(session.userId, {
-        peerId: request.peerId,
-        label: request.label ?? peerLabelOf(request.peerId),
-        since: iso(now()),
-      });
+      // 同一个人可能被接受过两次：申请处理完就删，重复申请再接受会走到这里。
+      // 用 addBuddyOnce 兜底：已经是伙伴就返回原有那行，不再重复写一行。
+      const buddy =
+        addBuddyOnce(session.userId, request.peerId) ??
+        db.listBuddies(session.userId).find((item) => item.peerId === request.peerId) ??
+        null;
       return { data: { buddy, request: null } };
     },
 

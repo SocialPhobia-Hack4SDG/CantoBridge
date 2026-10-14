@@ -8,7 +8,8 @@
     <title>CantoBridge · 讲粤语，认识香港</title>
     <link rel="stylesheet" href="/src/styles/tokens.css" />
     <link rel="stylesheet" href="/src/styles/app.css" />
-    <link rel="preload" href="/assets/branding/logo.png" as="image" />
+    <!-- 故意不 preload /assets/branding/logo.png：它是 1024+ 的 RGBA 原图（400 KB 级），
+         只有首访品牌动画和落地页用得到，写在这里会让每个路由、每次访问都白拉一遍。 -->
     <link rel="icon" href="data:," />
   </head>
   <body>

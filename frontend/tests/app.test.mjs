@@ -369,6 +369,7 @@ test('退出并换人：「我的」页退出后换掉账号，并且能重新�
   assert.deepEqual(calls, ['learner'], '已注册的设备进「我的」＝启动就登录');
 
   // 二次确认：第一下只是展开，不该真退出（退出会清掉本机账号，误触代价很大）
+  await ui.click('.profile-account');
   await ui.clickButton(zh('account.signOut'));
   assert.equal(ui.store.deviceId(), firstDevice, '第一下只是展开确认，不该动账号');
   assert.ok(ui.text().includes(zh('account.signOutHint')), '确认态要说清后果');
@@ -681,26 +682,60 @@ test('兜底：刷新后房间不在了，给横幅并回到匹配大厅', async
   assert.ok(ui.has('.fallback-banner'), '横幅组件没有渲染');
 });
 
-test('界面语言：入口在我的设置，切换后整页重渲染并保存', async () => {
+test('界面语言：入口在我的设置，切换后整站文案立即生效且留在面板原地', async () => {
   const ui = await boot();
   assert.ok(ui.text().includes(zh('app.slogan')));
   assert.equal(ui.has('.top-bar .lang-switch'), false);
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   assert.ok(ui.has('.language-card .lang-switch'));
 
   await ui.clickButton('繁體中文');
   assert.equal(ui.store.getState().locale, 'zh-Hant');
+  // 改语言要整页重渲染（外壳文案得立刻换），但人必须留在设置面板里：曾经这里会把人
+  // 踢回「我的」主界面，因为重渲染把 view.local 连同面板开关一起丢了。
+  assert.ok(ui.has('.settings-fullscreen'), '切换语言后设置面板应当还在原地');
+  assert.equal(ui.one('.language-card .is-selected').textContent, '繁體中文');
+  assert.ok(ui.text().includes(createTranslator('zh-Hant')('me.settings')));
+
+  await ui.click('.settings-close');
+  assert.equal(ui.has('.settings-fullscreen'), false, '关闭后应当回到「我的」主界面');
   await ui.goto('/');
   assert.ok(ui.text().includes(createTranslator('zh-Hant')('app.slogan')), '繁体中文字文案没有生效');
   assert.ok(ui.text().includes(createTranslator('zh-Hant')('landing.getStarted')));
 
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   await ui.clickButton('English');
   assert.equal(ui.store.getState().locale, 'en');
-  assert.equal(ui.root.querySelector('.language-card .is-selected').textContent, 'English');
+  assert.ok(ui.has('.settings-fullscreen'), '切换语言后设置面板应当还在原地');
+  assert.equal(ui.one('.language-card .is-selected').textContent, 'English');
+  await ui.click('.settings-close');
   await ui.goto('/');
   assert.ok(ui.text().includes(en('app.slogan')), '英文文案没有生效');
   assert.ok(ui.text().includes(en('landing.getStarted')));
+});
+
+test('切换语言不闪骨架屏、不重取一份数据（旧数据先顶上）', async () => {
+  const calls = [];
+  const ui = await boot({
+    hash: '#/me',
+    apiWrapper: (api) => ({ ...api, getMe: (...args) => { calls.push('getMe'); return api.getMe(...args); } }),
+  });
+  await flush();
+  const initial = calls.length;
+  await ui.click('.profile-settings');
+  assert.ok(ui.has('.settings-fullscreen'));
+
+  ui.button('繁體中文').click();
+  // 同步这一帧就已经是新语言 + 面板还在，而且没有退回骨架屏
+  assert.equal(ui.has('.settings-fullscreen'), true, '重渲染这一帧面板就该还在');
+  assert.equal(ui.has('.skeleton'), false, '带着旧数据重渲染，不该闪骨架屏');
+  await flush();
+  assert.equal(ui.has('.settings-fullscreen'), true);
+  assert.equal(ui.one('.language-card .is-selected').textContent, '繁體中文');
+  // 旧数据只是「先顶上」，接口照拉一次
+  assert.equal(calls.length, initial + 1, '重渲染后应当只重新取一次数');
 });
 
 test('兜底路由：任何不存在的路径都有页面，不留白屏', async () => {
@@ -762,6 +797,7 @@ test('配色主题：入口只在「我的」页，切一次就整站换色且�
   assert.equal(ui.doc.documentElement.getAttribute('data-theme'), 'mint', '冷启动就要把主题写到 <html>');
 
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   assert.ok(ui.has('.theme-card'), '「我的」页没有配色主题卡');
   assert.ok(ui.has('.theme-card .theme-switch'), '配色主题卡里没有切换器');
 
@@ -786,6 +822,7 @@ test('配色主题：入口只在「我的」页，切一次就整站换色且�
 test('配色主题：「我的」页与演示控制台两处互相同步', async () => {
   const ui = await boot();
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   await ui.clickButton(zh('theme.warm'));
   assert.equal(ui.store.getState().settings.theme, 'warm');
 
@@ -801,6 +838,7 @@ test('配色主题：「我的」页与演示控制台两处互相同步', async
   await ui.goto('/dev/mock');
   await ui.clickButton(zh('theme.warm'));
   await ui.goto('/me');
+  await ui.click('.profile-settings');
   assert.equal(
     ui.one('.theme-card .theme-option.theme-warm').classList.contains('is-selected'),
     true,
@@ -1080,6 +1118,7 @@ test('退出并换人：匹配频道要跟着关掉（令牌只在握手时校�
     assert.equal(sockets.length, 1, '进受保护页面应当连上匹配频道');
     sockets[0].open();
 
+    await ui.click('.profile-account');
     await ui.clickButton(zh('account.signOut'));
     await ui.clickButton(zh('account.confirmYes'));
     await flush();
@@ -1157,7 +1196,7 @@ test('我的页大卡片进入商城，商城故障后返回我的', async () =>
   await flush();
   assert.ok(ui.text().includes(zh('shop.unavailable')), ui.text());
   assert.ok(ui.has('.state-block.is-error'));
-  await ui.click('.icon-btn');
+  await ui.click('.exit-btn');
   assert.equal(ui.win.location.hash, '#/me');
   assert.ok(ui.has('.profile-shop-entry'));
   assert.equal(ui.has('.state-block.is-error'), false);
@@ -1173,4 +1212,27 @@ test('页面不显示手动布局切换按钮，表单正常可用', async () =>
   assert.equal(ui.one('.custom-tag-input').value, '正在填写');
   assert.equal(ui.has('.display-mode-switch'), false);
   assert.equal(ui.has('.display-mode-button'), false);
+});
+test('有出口的页面一律是带文字的胶囊返回，落点由路由的 backTo 决定', async () => {
+  const cases = [
+    { label: '/register', role: 'learner', open: (ui) => ui.goto('/register'), to: '/' },
+    { label: '/match/:learnerId', role: 'buddy', open: async (ui) => { await ui.goto('/match'); await ui.click('.buddy-card'); }, to: '/match' },
+    { label: '/shop', role: 'learner', open: (ui) => ui.goto('/shop'), to: '/me' },
+    { label: '/history', role: 'learner', open: (ui) => ui.goto('/history'), to: '/me' },
+    { label: '/dev/mock', role: 'learner', open: (ui) => ui.goto('/dev/mock'), to: '/me' },
+  ];
+
+  for (const item of cases) {
+    const ui = await boot({ role: item.role });
+    await flush();
+    await item.open(ui);
+    await flush();
+
+    assert.ok(ui.has('.exit-btn'), item.label + ' 缺少带文字的返回按钮');
+    assert.equal(ui.has('.icon-btn'), false, item.label + ' 不该再用 44px 的返回箭头');
+    assert.ok(ui.one('.exit-btn').textContent.includes(zh('action.back')), item.label + ' 的返回文案应是「返回」');
+
+    await ui.click('.exit-btn');
+    assert.equal(ui.win.location.hash, '#' + item.to, item.label + ' 的返回落点应是 ' + item.to);
+  }
 });

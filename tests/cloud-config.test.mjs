@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { deploymentConfig } from '../deploy/config.mjs';
 import { createWindowLimiter } from '../deploy/limits.mjs';
@@ -59,5 +60,23 @@ test('默认开放网站入口，旧邀请口令不再启用保护，也无需�
     const config = deploymentConfig({ ...env, CANTOBRIDGE_INVITE_REQUIRED: undefined, CANTOBRIDGE_INVITE_CODE });
     assert.equal(config.inviteRequired, false);
     assert.equal(config.inviteCode, null);
+  }
+});
+
+test('环境示例覆盖部署配置读取的每个变量，平台注入与可选适配除外', async () => {
+  const [source, example] = await Promise.all([
+    readFile(new URL('../deploy/config.mjs', import.meta.url), 'utf8'),
+    readFile(new URL('../.env.example', import.meta.url), 'utf8'),
+  ]);
+  const names = new Set([
+    ...[...source.matchAll(/env\.([A-Z][A-Z0-9_]*)/g)].map(match => match[1]),
+    ...[...source.matchAll(/required\('([A-Z][A-Z0-9_]*)'\)/g)].map(match => match[1]),
+  ]);
+  const platformProvided = new Set(['RENDER', 'RENDER_EXTERNAL_URL']);
+  const optionalAdapter = new Set(['CLOUDFLARE_TURN_KEY_ID', 'CLOUDFLARE_TURN_API_TOKEN']);
+  const documented = new Set([...example.matchAll(/^\s*([A-Z][A-Z0-9_]*)\s*=/gm)].map(match => match[1]));
+  for (const name of names) {
+    if (platformProvided.has(name) || optionalAdapter.has(name)) continue;
+    assert.ok(documented.has(name), '.env.example 缺少 ' + name);
   }
 });

@@ -15,10 +15,17 @@
 .profile-avatar-button { position: relative; display: inline-flex; width: 64px; height: 64px; padding: 0; border: 0; background: transparent; cursor: pointer; flex-shrink: 0; border-radius: 50%; }
 .profile-avatar-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 .avatar-edit-dot { position: absolute; right: -3px; bottom: -3px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: var(--on-accent); background: var(--accent); border: 2px solid var(--bg-raised); font-size: 12px; }
-.profile-settings-heading { cursor: pointer; min-height: 44px; }
-.profile-settings-heading .section-title { display: inline; font-size: 18px; margin: 0; }
-.profile-settings-heading:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-.profile-settings > .card, .profile-account > .card { border: 0; border-radius: 0; box-shadow: none; background: transparent; padding: 18px 0 0; }
+/* 「设置 / 账号」入口：两个按钮同一行；点开是整页内置面板（见 .sheet-fullscreen）。 */
+.profile-forms { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.profile-forms > .card { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 44px; padding: 16px 18px; text-align: left; cursor: pointer; }
+.profile-forms > .card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+/* 悬停/按下沿用「积分商城」入口的反馈：抬起阴影 + 轻微缩放。 */
+@media (hover: hover) { .profile-forms > .card:hover { box-shadow: var(--shadow-raised); } }
+.profile-forms > .card:active { transform: scale(.99); }
+.profile-forms .entry-symbol { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-strong); }
+.profile-forms .profile-settings-heading { flex: 1; min-width: 0; cursor: pointer; }
+.profile-forms .profile-settings-heading .section-title { display: inline; font-size: 18px; margin: 0; }
+@media (min-width: 900px) { .profile-forms { gap: 24px; grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .appearance-editor > .preset-avatar, .appearance-editor > .framed-avatar { display: flex; margin: 12px auto; }
 .appearance-options { border: 0; min-width: 0; padding: 0; margin: 20px 0; }
 .appearance-options legend { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
@@ -183,8 +190,8 @@ button {
   height: 44px;
 }
 
-/* onboarding 的退出键：带文字的描边胶囊。
-   退出＝放弃本次填写并还原配置，是有后果的动作，所以给它文字与主色，不沿用 44px 的返回箭头。 */
+/* 页头带文字的描边胶囊：onboarding 的「退出」（有后果的动作）与 /shop 的显眼「返回」共用。
+   这两种入口都比 44px 的返回箭头更需要存在感，所以给它文字与主色。 */
 .exit-btn {
   display: inline-flex;
   align-items: center;
@@ -212,6 +219,9 @@ button {
   font-size: 18px;
   line-height: 1;
 }
+
+/* 字形图标用文本，SVG 图标（见 dom.js 的 ICON_SVG）撑满同一个盒子。 */
+.icon > svg { display: block; width: 100%; height: 100%; }
 
 .lang-switch {
   display: flex;
@@ -1028,6 +1038,18 @@ button.pill[aria-pressed='true'] {
 }
 
 .privacy-copy { display: grid; gap: 6px; }
+
+/* 「设置」面板里的匿名开关：一张普通卡片，左边标签/说明上下堆叠、右边开关。
+   别复用 .privacy-row —— 那是「页面里的分隔行」（12px 上下留白 + 下边框），
+   和 .card 叠在同一个元素上会把卡片内边距一起冲掉，卡片也会多出一条分隔线。 */
+.privacy-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+/* 说明文字要占满开关以外的宽度才按卡片宽度换行（不加就得靠 fit-content 赌）。 */
+.privacy-card > .privacy-copy { flex: 1; min-width: 0; }
 
 .switch {
   position: relative;
@@ -1916,6 +1938,10 @@ button.phrase-text { cursor: pointer; }
   cursor: pointer;
 }
 
+/* 「连线记录」等行内入口沿用「积分商城」入口的反馈：抬起阴影 + 轻微缩放。 */
+@media (hover: hover) { .row-item:hover { box-shadow: var(--shadow-raised); } }
+.row-item:active { transform: scale(.99); }
+
 .profile-head {
   display: flex;
   align-items: center;
@@ -1997,7 +2023,7 @@ button.phrase-text { cursor: pointer; }
 
 .buddy-slot-group {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .buddy-slot-title {
@@ -2006,17 +2032,15 @@ button.phrase-text { cursor: pointer; }
   color: var(--text-secondary);
 }
 
+/* 每个伙伴是一颗独立按钮：自带底色、圆角和边线，不再用分隔线把行串成一列。 */
 .buddy-row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.buddy-row:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-raised);
 }
 
 .buddy-row .avatar {
@@ -2055,6 +2079,16 @@ button.phrase-text { cursor: pointer; }
   padding: var(--space-3);
   border-radius: var(--radius-md);
   background: var(--bg-sunken);
+}
+
+/*
+ * 伙伴列表的滚动窗口：底色用页面背景，好友卡片（--bg-raised）才是卡片自己的颜色，
+ * 两者的色差让每一行自然读成一颗独立按钮。高度与滚动在桌面断点里定，见文件末尾。
+ */
+.buddy-scroll {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
 }
 
 @media (min-width: 900px) {
@@ -2134,13 +2168,36 @@ button.phrase-text { cursor: pointer; }
   .home-action { min-height: 310px; padding: 36px; gap: 16px; }
   .home-action-title { font-size: 30px; letter-spacing: -.7px; max-width: 420px; }
   .home-action .btn { margin-top: auto; width: auto; padding-inline: 32px; }
-  .page[data-page='me'] > section { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px; align-items: start; }
-  .page[data-page='me'] > section > * { margin: 0; }
-  .page[data-page='me'] > section > .profile-head,
-  .page[data-page='me'] > section > .tile-grid { grid-column: 1 / -1; }
+  /* 整页内置面板（.sheet-fullscreen）是 position: fixed 的整页覆盖层，虽然和页面内容
+     挂在同一个位置，但它不是页面栅格里的格子：这几条网格规则必须显式排除它。
+     否则 display:grid + gap + align-content:stretch（网格默认值）会把面板内部撑开成
+     标题下方一大段空白，`> * { margin: 0 }` 还会把面板里靠 margin:auto 居中的内容
+     顶到左内边距上。 */
+  .page[data-page='me'] > section:not(.sheet-fullscreen) { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px; align-items: start; }
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > * { margin: 0; }
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .profile-head,
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .tile-grid { grid-column: 1 / -1; }
   .profile-head { gap: 24px; min-height: 128px; }
-  .page[data-page='me'] > section > :not(.card):not(.tile-grid),
-  .page[data-page='me'] > section > .card.field { grid-column: 1 / -1; }
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > :not(.card):not(.tile-grid),
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .card.field { grid-column: 1 / -1; }
+  /*
+   * 伙伴卡片与左边成就墙等高：卡片自己不参与撑高这一行——滚动区 flex-basis 是 0、
+   * min-height 是 0，内容再长也不进内在尺寸计算，所以行高由成就墙决定；卡片再 stretch
+   * 填满整行，超出的好友只在窗口内部滚动。
+   */
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .buddy-slot-card {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .buddy-slot-card > .card-title { flex: none; }
+  .buddy-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
   .profile-head > .avatar { width: 64px; height: 64px; flex-shrink: 0; }
   .profile-head > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
   .profile-head > .pill { margin-left: auto; }
@@ -2590,9 +2647,21 @@ button.phrase-text { cursor: pointer; }
 .achievement-title { display: inline-flex; width: fit-content; padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; margin-top: 6px; }
 .achievement-stats-note { color: var(--text-muted); font-size: 12px; line-height: 1.6; }
 .achievement-expand { margin-top: 20px; }
-.achievement-fullscreen { position: fixed; inset: 0; z-index: 150; overflow-y: auto; background: var(--bg-base); padding: clamp(20px, 4vw, 64px); }
-.achievement-fullscreen > .badge-wall, .achievement-fullscreen > p, .achievement-fullscreen-head { max-width: 1100px; margin-left: auto; margin-right: auto; }
-.achievement-fullscreen-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+/* 整页内置面板（成就墙 / 设置 / 账号）。居中靠 flex 的 align-items，不用 margin:auto：
+   「我的」页的桌面网格规则会把面板子节点的 margin 清成 0（见上），margin 居中在那里会失效。 */
+.sheet-fullscreen {
+  position: fixed; inset: 0; z-index: 150; overflow-y: auto;
+  background: var(--bg-base); padding: clamp(20px, 4vw, 64px);
+  padding-bottom: calc(clamp(20px, 4vw, 64px) + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; align-items: center;
+  --sheet-max: 1100px;
+}
+.sheet-fullscreen > * { flex: 0 0 auto; width: 100%; max-width: var(--sheet-max); }
+/* 设置 / 账号是单列内容，收窄一档更好读；成就墙要多列铺满，沿用 1100。 */
+.settings-fullscreen, .account-fullscreen { --sheet-max: 720px; }
+.sheet-fullscreen-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.sheet-fullscreen-head > h2 { margin: 0; font-size: 22px; }
+.sheet-body { display: flex; flex-direction: column; gap: 18px; }
 .achievement-fullscreen .badge-wall { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 24px; }
 .achievement-fullscreen .badge { min-height: 210px; }
 @media (max-width: 520px) { .achievement-fullscreen .badge-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } .achievement-fullscreen .badge { padding: 16px 10px; } }
