@@ -246,3 +246,12 @@
 2. **信令断线重连补发**：断线期间的事件不重放，前端重连后靠 REST 拉一次现状（`queue:updated` 在连上时会立刻推一份）。
 3. **TURN 临时凭证签发**：跨网络 / 对称 NAT 才需要，同 Wi-Fi 与隧道够用。
 4. **APK 路线仍未实现的 3 个端点**：见第 6 节，需求清单在 [frontend/docs/08-apk-and-backend-asks.md](frontend/docs/08-apk-and-backend-asks.md)。
+
+## 10. 前端顺手记下的非阻塞项
+
+1. **品牌 logo 体积**（2026-10-14 记，不阻塞 demo）：`frontend/assets/branding/logo.png` 是
+   1024+ 的 RGBA 原图、**435 KB**，而页面里只用在两处——落地页（180px）与首访品牌动画
+   （340px）。原图被 `frontend/tests/logo-assets.test.mjs` 的「用用户选中的第 3 款」契约
+   锁着不能动，所以做法是**另导一份 512px 的副本给页面引用**，原图继续只当品牌素材。
+   手机首屏能省掉几百 KB。（顺带：`index.html` 里那句全站 `<link rel="preload">` 已经删掉，
+   它会让每个路由、每次访问都白拉一遍这 435 KB。）

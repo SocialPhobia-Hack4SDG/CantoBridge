@@ -1239,6 +1239,14 @@ test('设置与账号入口同一行，点开是整页内置面板（齿轮 / �
   assert.ok(node.querySelector('.theme-card .theme-switch'), '设置面板里要有配色主题卡');
   assert.ok(node.querySelector('.language-card .lang-switch'), '设置面板里要有语言切换');
   assert.equal(node.querySelectorAll('.switch').length, 1, '设置面板里要有匿名开关');
+  const zh = createTranslator('zh-Hans');
+  const anonymousCard = node.querySelector('.privacy-card');
+  assert.ok(anonymousCard, '匿名开关要包在一张普通卡片里');
+  assert.equal(anonymousCard.querySelector('.privacy-row'), null, '.card 不能和 .privacy-row 叠在同一个元素上（会把卡片内边距冲掉）');
+  const anonymousCopy = anonymousCard.querySelector('.privacy-copy');
+  assert.ok(anonymousCopy, '「匿名模式」与灰色说明要一上一下堆叠');
+  assert.equal(anonymousCopy.querySelector('.privacy-label').textContent, zh('privacy.anonymous'));
+  assert.equal(anonymousCopy.querySelector('small.muted-note').textContent, zh('privacy.anonymousHint'));
   node.querySelector('.settings-close').click();
   assert.equal(ctx.view.local.settingsExpanded, false, '关闭按钮要回写标志');
 

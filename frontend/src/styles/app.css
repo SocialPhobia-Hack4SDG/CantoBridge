@@ -1039,6 +1039,18 @@ button.pill[aria-pressed='true'] {
 
 .privacy-copy { display: grid; gap: 6px; }
 
+/* 「设置」面板里的匿名开关：一张普通卡片，左边标签/说明上下堆叠、右边开关。
+   别复用 .privacy-row —— 那是「页面里的分隔行」（12px 上下留白 + 下边框），
+   和 .card 叠在同一个元素上会把卡片内边距一起冲掉，卡片也会多出一条分隔线。 */
+.privacy-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+/* 说明文字要占满开关以外的宽度才按卡片宽度换行（不加就得靠 fit-content 赌）。 */
+.privacy-card > .privacy-copy { flex: 1; min-width: 0; }
+
 .switch {
   position: relative;
   width: 52px;

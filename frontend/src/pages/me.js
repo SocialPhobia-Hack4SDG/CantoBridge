@@ -167,10 +167,10 @@ export const ProfilePage = definePage({
           }, { 'zh-Hans': '简体中文', 'zh-Hant': '繁體中文', en: 'English' }[locale])))),
       h(
         'div',
-        { class: 'card privacy-row' },
+        { class: 'card privacy-card' },
         h(
           'div',
-          {},
+          { class: 'privacy-copy' },
           h('span', { class: 'privacy-label', text: t('privacy.anonymous') }),
           h('small', { class: 'muted-note', text: t('privacy.anonymousHint') }),
         ),

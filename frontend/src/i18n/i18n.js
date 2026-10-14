@@ -204,7 +204,7 @@ export const UI_STRINGS = {
   'privacy.step': U('第 3 / 3 步', '第 3 / 3 步', 'Step 3 of 3'),
   'privacy.title': U('资料可见范围', '資料可見範圍', 'Profile visibility'),
   'privacy.anonymous': U('匿名模式', '匿名模式', 'Anonymous mode'),
-  'privacy.anonymousHint': U('开启后对外显示“匿名用户”，隐藏你的用户名和用户 ID。', '開啟後對外顯示「匿名用戶」，隱藏你的用戶名稱和用戶 ID。', 'Show Anonymous user to others and hide your username and user ID.'),
+  'privacy.anonymousHint': U('开启后隐藏你的用户名和用户 ID', '開啟後隱藏你的用戶名稱和用戶 ID', 'Hide your username and user ID'),
   'privacy.visibilityHint': U('选择伙伴可以看到哪些资料，关闭资料标签后仍会显示头像和名称。', '選擇夥伴可以看到哪些資料，關閉資料標籤後仍會顯示頭像和名稱。', 'Choose which details partners can see. Your avatar and name remain visible when profile tags are hidden.'),
   'privacy.preview': U('别人会看到你这样', '人哋會睇到你咁樣', 'How others will see you'),
   'privacy.finishSetup': U('完成设置', '搞掂設定', 'Finish setup'),
