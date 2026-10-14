@@ -298,6 +298,13 @@ test('happy path（学习者）：落地 -> 注册 -> 匹配 -> 房间 -> 结算
   assert.equal(store.getState().social.buddyRequests.length, 0, '撤回之后申请表应当清空');
   assert.ok(ui.text().includes(zh('buddy.request')), '撤回之后应当回到「申请成为伙伴」');
 
+  // ⑪ 连线记录页左上角同样是带文字的显眼返回，点一下一步回「我的」（深链进来也退得回去）
+  assert.ok(ui.has('.exit-btn'), '连线记录页要有带文字的页头按钮');
+  assert.equal(ui.has('.icon-btn'), false, '连线记录页不再用返回箭头');
+  assert.ok(ui.one('.exit-btn').textContent.includes(zh('action.back')));
+  await ui.click('.exit-btn');
+  assert.equal(win.location.hash, '#/me', '连线记录页返回一步回「我的」');
+
   // 收尾：离开房间后不应残留 interval（现场 demo 不能越跑越卡）
   assert.equal(win.pendingIntervals(), 0, '还有定时器没有清理');
 });

@@ -340,7 +340,7 @@ export function createApp({
       route.back && route.path !== '/'
         ? isOnboardingStep
           ? () => leaveOnboarding()
-          : route.path === '/shop' ? () => navigate('/me') : () => win.history.back()
+          : route.backTo ? () => navigate(route.backTo) : () => win.history.back()
         : null;
     return h(TopBar, {
       title: ctx.t(route.titleKey ?? 'app.name'),

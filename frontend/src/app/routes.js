@@ -34,8 +34,8 @@ export const ROUTES = [
   { path: '/room/:roomId/summary', name: 'summary', page: SessionSummaryPage, titleKey: 'summary.title', guard: 'room', nav: null, back: false, immersive: false },
   { path: '/me', name: 'me', page: ProfilePage, titleKey: 'me.title', guard: 'onboarded', nav: 'me', back: false, immersive: false },
   { path: '/leaderboard', name: 'leaderboard', page: LeaderboardPage, titleKey: 'leaderboard.title', guard: 'onboarded', nav: 'leaderboard', back: false, immersive: false },
-  { path: '/shop', name: 'shop', page: ShopPage, titleKey: 'shop.title', guard: 'onboarded', nav: null, back: true, immersive: false, backLabelKey: 'action.back' },
-  { path: '/history', name: 'history', page: HistoryPage, titleKey: 'history.title', guard: 'onboarded', nav: null, back: true, immersive: false },
+  { path: '/shop', name: 'shop', page: ShopPage, titleKey: 'shop.title', guard: 'onboarded', nav: null, back: true, immersive: false, backLabelKey: 'action.back', backTo: '/me' },
+  { path: '/history', name: 'history', page: HistoryPage, titleKey: 'history.title', guard: 'onboarded', nav: null, back: true, immersive: false, backLabelKey: 'action.back', backTo: '/me' },
   { path: '/dev/mock', name: 'devMock', page: MockConsolePage, titleKey: 'dev.title', guard: null, nav: null, back: true, immersive: false },
   { path: '*', name: 'notFound', page: NotFoundPage, titleKey: 'notFound.title', guard: null, nav: null, back: false, immersive: false },
 ];
