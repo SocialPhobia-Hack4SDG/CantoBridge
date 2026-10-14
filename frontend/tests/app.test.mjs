@@ -298,13 +298,6 @@ test('happy path（学习者）：落地 -> 注册 -> 匹配 -> 房间 -> 结算
   assert.equal(store.getState().social.buddyRequests.length, 0, '撤回之后申请表应当清空');
   assert.ok(ui.text().includes(zh('buddy.request')), '撤回之后应当回到「申请成为伙伴」');
 
-  // ⑪ 连线记录页左上角同样是带文字的显眼返回，点一下一步回「我的」（深链进来也退得回去）
-  assert.ok(ui.has('.exit-btn'), '连线记录页要有带文字的页头按钮');
-  assert.equal(ui.has('.icon-btn'), false, '连线记录页不再用返回箭头');
-  assert.ok(ui.one('.exit-btn').textContent.includes(zh('action.back')));
-  await ui.click('.exit-btn');
-  assert.equal(win.location.hash, '#/me', '连线记录页返回一步回「我的」');
-
   // 收尾：离开房间后不应残留 interval（现场 demo 不能越跑越卡）
   assert.equal(win.pendingIntervals(), 0, '还有定时器没有清理');
 });
@@ -1172,10 +1165,6 @@ test('我的页大卡片进入商城，商城故障后返回我的', async () =>
   await flush();
   assert.ok(ui.text().includes(zh('shop.unavailable')), ui.text());
   assert.ok(ui.has('.state-block.is-error'));
-  // 商城左上角是带文字的显眼返回（和 onboarding 的退出键同一套外观），不是 44px 的返回箭头
-  assert.ok(ui.has('.exit-btn'), '商城页要有带文字的页头按钮');
-  assert.equal(ui.has('.icon-btn'), false, '商城页不再用返回箭头');
-  assert.ok(ui.one('.exit-btn').textContent.includes(zh('action.back')));
   await ui.click('.exit-btn');
   assert.equal(ui.win.location.hash, '#/me');
   assert.ok(ui.has('.profile-shop-entry'));
@@ -1192,4 +1181,27 @@ test('页面不显示手动布局切换按钮，表单正常可用', async () =>
   assert.equal(ui.one('.custom-tag-input').value, '正在填写');
   assert.equal(ui.has('.display-mode-switch'), false);
   assert.equal(ui.has('.display-mode-button'), false);
+});
+test('有出口的页面一律是带文字的胶囊返回，落点由路由的 backTo 决定', async () => {
+  const cases = [
+    { label: '/register', role: 'learner', open: (ui) => ui.goto('/register'), to: '/' },
+    { label: '/match/:learnerId', role: 'buddy', open: async (ui) => { await ui.goto('/match'); await ui.click('.buddy-card'); }, to: '/match' },
+    { label: '/shop', role: 'learner', open: (ui) => ui.goto('/shop'), to: '/me' },
+    { label: '/history', role: 'learner', open: (ui) => ui.goto('/history'), to: '/me' },
+    { label: '/dev/mock', role: 'learner', open: (ui) => ui.goto('/dev/mock'), to: '/me' },
+  ];
+
+  for (const item of cases) {
+    const ui = await boot({ role: item.role });
+    await flush();
+    await item.open(ui);
+    await flush();
+
+    assert.ok(ui.has('.exit-btn'), item.label + ' 缺少带文字的返回按钮');
+    assert.equal(ui.has('.icon-btn'), false, item.label + ' 不该再用 44px 的返回箭头');
+    assert.ok(ui.one('.exit-btn').textContent.includes(zh('action.back')), item.label + ' 的返回文案应是「返回」');
+
+    await ui.click('.exit-btn');
+    assert.equal(ui.win.location.hash, '#' + item.to, item.label + ' 的返回落点应是 ' + item.to);
+  }
 });
