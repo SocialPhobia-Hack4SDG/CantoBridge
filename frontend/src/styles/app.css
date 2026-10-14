@@ -2156,25 +2156,30 @@ button.phrase-text { cursor: pointer; }
   .home-action { min-height: 310px; padding: 36px; gap: 16px; }
   .home-action-title { font-size: 30px; letter-spacing: -.7px; max-width: 420px; }
   .home-action .btn { margin-top: auto; width: auto; padding-inline: 32px; }
-  .page[data-page='me'] > section { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px; align-items: start; }
-  .page[data-page='me'] > section > * { margin: 0; }
-  .page[data-page='me'] > section > .profile-head,
-  .page[data-page='me'] > section > .tile-grid { grid-column: 1 / -1; }
+  /* 整页内置面板（.sheet-fullscreen）是 position: fixed 的整页覆盖层，虽然和页面内容
+     挂在同一个位置，但它不是页面栅格里的格子：这几条网格规则必须显式排除它。
+     否则 display:grid + gap + align-content:stretch（网格默认值）会把面板内部撑开成
+     标题下方一大段空白，`> * { margin: 0 }` 还会把面板里靠 margin:auto 居中的内容
+     顶到左内边距上。 */
+  .page[data-page='me'] > section:not(.sheet-fullscreen) { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px; align-items: start; }
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > * { margin: 0; }
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .profile-head,
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .tile-grid { grid-column: 1 / -1; }
   .profile-head { gap: 24px; min-height: 128px; }
-  .page[data-page='me'] > section > :not(.card):not(.tile-grid),
-  .page[data-page='me'] > section > .card.field { grid-column: 1 / -1; }
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > :not(.card):not(.tile-grid),
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .card.field { grid-column: 1 / -1; }
   /*
    * 伙伴卡片与左边成就墙等高：卡片自己不参与撑高这一行——滚动区 flex-basis 是 0、
    * min-height 是 0，内容再长也不进内在尺寸计算，所以行高由成就墙决定；卡片再 stretch
    * 填满整行，超出的好友只在窗口内部滚动。
    */
-  .page[data-page='me'] > section > .buddy-slot-card {
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .buddy-slot-card {
     align-self: stretch;
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
-  .page[data-page='me'] > section > .buddy-slot-card > .card-title { flex: none; }
+  .page[data-page='me'] > section:not(.sheet-fullscreen) > .buddy-slot-card > .card-title { flex: none; }
   .buddy-scroll {
     flex: 1 1 0;
     min-height: 0;
@@ -2630,8 +2635,18 @@ button.phrase-text { cursor: pointer; }
 .achievement-title { display: inline-flex; width: fit-content; padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; margin-top: 6px; }
 .achievement-stats-note { color: var(--text-muted); font-size: 12px; line-height: 1.6; }
 .achievement-expand { margin-top: 20px; }
-.sheet-fullscreen { position: fixed; inset: 0; z-index: 150; overflow-y: auto; background: var(--bg-base); padding: clamp(20px, 4vw, 64px); }
-.sheet-fullscreen > .badge-wall, .sheet-fullscreen > p, .sheet-fullscreen > .sheet-body, .sheet-fullscreen-head { max-width: 1100px; margin-left: auto; margin-right: auto; }
+/* 整页内置面板（成就墙 / 设置 / 账号）。居中靠 flex 的 align-items，不用 margin:auto：
+   「我的」页的桌面网格规则会把面板子节点的 margin 清成 0（见上），margin 居中在那里会失效。 */
+.sheet-fullscreen {
+  position: fixed; inset: 0; z-index: 150; overflow-y: auto;
+  background: var(--bg-base); padding: clamp(20px, 4vw, 64px);
+  padding-bottom: calc(clamp(20px, 4vw, 64px) + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; align-items: center;
+  --sheet-max: 1100px;
+}
+.sheet-fullscreen > * { flex: 0 0 auto; width: 100%; max-width: var(--sheet-max); }
+/* 设置 / 账号是单列内容，收窄一档更好读；成就墙要多列铺满，沿用 1100。 */
+.settings-fullscreen, .account-fullscreen { --sheet-max: 720px; }
 .sheet-fullscreen-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .sheet-fullscreen-head > h2 { margin: 0; font-size: 22px; }
 .sheet-body { display: flex; flex-direction: column; gap: 18px; }
