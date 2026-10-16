@@ -36,7 +36,7 @@ const lines = (...rows) => rows.join(LF);
 test('真实文档：属性汇总与接口契约零错误', () => {
   const { errors, stats } = checkApi({ frontendDir });
   assert.deepEqual(errors, [], '存在不一致：' + LF + errors.join(LF));
-  assert.equal(stats.endpointCount, 37);
+  assert.equal(stats.endpointCount, 39);
   assert.equal(stats.fieldCount, 54);
   assert.equal(stats.runtimeFieldCount, 7);
   assert.equal(stats.vocabularyCount, VOCABULARY_EXPORTS.length);

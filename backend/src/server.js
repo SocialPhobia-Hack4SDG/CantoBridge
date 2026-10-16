@@ -34,6 +34,7 @@ import { createRoomHandlers } from './domain/rooms.js';
 import { createRtcHandlers, turnFromEnv } from './domain/rtc.js';
 import { createSocialHandlers } from './domain/social.js';
 import { createShopHandlers } from './domain/shop.js';
+import { createGenAiHandlers } from './domain/genai.js';
 import { createHub } from './ws/hub.js';
 import { attachSignaling, createEventBridge } from './ws/signaling.js';
 
@@ -54,6 +55,7 @@ export function createServer({
   runRequest = null,
   requestPolicy = null,
   exposeErrors = true,
+  genAiProvider = undefined,
 } = {}) {
   const router = createRouter();
   const idempotency = createIdempotency({ now });
@@ -69,6 +71,9 @@ export function createServer({
   const rtc = createRtcHandlers({ db, now, turn, iceProvider, ...(stunUrls ? { stunUrls } : {}) });
   const social = createSocialHandlers({ db, now });
   const shop = createShopHandlers({ db });
+  const genai = createGenAiHandlers({ db, ...(genAiProvider ? { provider: genAiProvider } : {}) });
+  router.post('/api/genai/topic-cards', genai.generateCards, { idempotent: true });
+  router.post('/api/genai/tutor/reply', genai.tutorReply, { idempotent: true });
   router.get('/api/me/shop', shop.get);
   router.post('/api/me/shop/redeem', shop.redeem, { idempotent: true });
   const startedAt = now();

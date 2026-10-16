@@ -11,6 +11,8 @@ import { ALL_VOCABULARIES } from '../src/data/vocabularies.js';
 
 /** Phase 0~4 已经实现的契约内端点（账号资料 + 匹配成房 + 房间结算 + 伙伴关系 + 沉淀 + ICE）。 */
 const EXPECTED_ROUTES = [
+  'POST /api/genai/topic-cards',
+  'POST /api/genai/tutor/reply',
   'DELETE /api/match/queue',
   'DELETE /api/me/buddies/:peerId',
   'DELETE /api/me/buddy-requests/:peerId',
@@ -50,17 +52,17 @@ const EXPECTED_ROUTES = [
 test('真实仓库：后端已实现路由与 docs/10 契约零错误', async () => {
   const { errors, stats } = await checkContract();
   assert.deepEqual(errors, []);
-  assert.equal(stats.documentedEndpointCount, 37, '契约里一共 37 个端点');
+  assert.equal(stats.documentedEndpointCount, 39, '契约里一共 39 个端点，含两个GenAI预留接口');
   assert.equal(stats.vocabularyCount, 10, '契约 3.6 的十张词表');
   assert.match(stats.coverage, /%$/);
 
-  // 已实现的契约内路由就是这三十四条：少一个（顺手删了接口）或多一个（没先改契约）都要红
+  // 已实现的契约内路由：少一个或多一个都要红。
   const implemented = implementedRoutes()
     .map((route) => `${route.method.toUpperCase()} ${route.path}`)
     .sort();
   assert.deepEqual(implemented, [...EXPECTED_ROUTES].sort());
   assert.equal(stats.implementedEndpointCount, EXPECTED_ROUTES.length);
-  // 覆盖率要跟着涨：37 条里已实现 34 条
+  // 39 条里已实现 36 条（GenAI两个接口当前仅示例实现）。
   assert.equal(stats.coverage, '92%');
 
   // `contract: false` 的本地口子（health / dev reset / dev match-request / dev buddy-request）不算进覆盖率，但确实存在

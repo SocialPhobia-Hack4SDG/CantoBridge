@@ -177,6 +177,8 @@ stateDiagram-v2
 
 | 接口 | 方法 | 用途 | 主要请求字段 | 主要响应字段 | 谁在用 |
 | --- | --- | --- | --- | --- | --- |
+| `/api/genai/topic-cards` | POST | GenAI话题卡接入准备，当前仅示例 | learnerInterests、buddyInterests、cantoneseLevel、count、requestId | mode、provider、model、cards、context | 后端预留，尚未接UI |
+| `/api/genai/tutor/reply` | POST | AI导师文字对话接入准备，当前仅示例 | text、currentCard、requestId | mode、provider、model、reply、suggestions、cardId | 后端预留，尚未接UI |
 | `/api/auth/session` | POST | 一键进入：按 `deviceId` 认账号（见过就复用，没见过就新建），返回令牌与当前身份 | role、deviceId | token、expiresAt、userId、role | onboarding 入口、`/dev/mock` |
 | `/api/auth/login` | POST | 正式登录（APK 端必需） | userId、credential | token、refreshToken | 登录页（后续） |
 | `/api/auth/refresh` | POST | 令牌续期（APK 端必需） | refreshToken | token、expiresAt | 请求拦截器 |

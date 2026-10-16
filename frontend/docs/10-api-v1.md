@@ -398,6 +398,15 @@ flowchart TD
 >
 > 本节的端点集合与 09 第 3.2 节**逐条一一对应**：多有、少有、重名都会被 `tools/check-api.mjs` 拦下来。每个端点写清六件事：鉴权、幂等、请求字段、响应字段、错误码、谁在用。
 
+### 4.0 GenAI 接口准备（仅模拟响应）
+
+| 接口 | 方法 | 鉴权 | 幂等 | 请求字段 | 响应字段 | 错误码 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/api/genai/topic-cards` | POST | Bearer | 是 | `learnerInterests`、`buddyInterests`、`cantoneseLevel`、`count`、`requestId` | `mode`、`provider`、`model`、`cards`、`context` | 400 `bad_request`、401 `not_authorized`、500 `internal` |
+| `/api/genai/tutor/reply` | POST | Bearer | 是 | `text`、`currentCard`、`requestId` | `mode`、`provider`、`model`、`reply`、`suggestions`、`cardId` | 400 `bad_request`、401 `not_authorized`、500 `internal` |
+
+当前后端仅提供 `mode: "mock"`、`provider: "sample"`、`model: null` 的示例响应，不调用外部模型、不产生API费用、不接语音、不改现有UI。完整字段限制、调用示例及后续提供方适配方式见仓库中的 `backend/docs/genai.md`。这两个接口不属于当前前端 mock/http 方法集合，不要求新增页面调用。
+
 ### 4.1 账号与鉴权
 
 | 接口 | 方法 | 鉴权 | 幂等 | 请求字段 | 响应字段 | 错误码 |

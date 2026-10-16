@@ -25,6 +25,7 @@ export async function startTestServer({
   now = undefined,
   turn = null,
   stunUrls = undefined,
+  genAiProvider = undefined,
 } = {}) {
   const database = db ?? createDb({ filePath: dataFile });
   // `now` 可注入：测「匹配请求过期」「倒计时到点」这类用例要能把时钟拨快
@@ -33,6 +34,7 @@ export async function startTestServer({
     corsOrigins,
     devRoutes,
     turn,
+    ...(genAiProvider ? { genAiProvider } : {}),
     ...(now ? { now } : {}),
     ...(stunUrls ? { stunUrls } : {}),
   });
