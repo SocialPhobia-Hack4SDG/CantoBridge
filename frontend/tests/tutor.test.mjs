@@ -8,6 +8,8 @@ const t = createTranslator('zh-Hans');
 test('首页仅学习者有一个导师入口，不改变主导航；未注册资料和母语者不能进入', async () => {
   const ui = await boot({ hash: '#/home' }); await flush();
   assert.equal(ui.all('.ai-tutor-entry').length, 1); assert.equal(ui.all('.bottom-nav button').length, 4);
+  assert.equal(ui.one('.home-practice-actions').children.filter(node => node.classList.contains('home-action')).length, 2, '两个入口均为同层卡片');
+  assert.equal(ui.one('.home-practice-actions').children[1], ui.one('.ai-tutor-entry'));
   await ui.clickButton(t('tutor.entry')); assert.equal(ui.win.location.hash, '#/tutor');
   assert.ok(ui.text().includes(t('tutor.demoHint'))); assert.equal(ui.has('.bottom-nav'), false);
   await ui.clickButton(t('action.back')); assert.equal(ui.win.location.hash, '#/home');

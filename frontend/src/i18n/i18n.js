@@ -11,6 +11,7 @@ export const LOCALES = ['zh-Hans', 'zh-Hant', 'en'];
 export const UI_STRINGS = {
   'tutor.title': U('AI 粤语导师', 'AI 粵語導師', 'AI Cantonese tutor'),
   'tutor.entry': U('和 AI 导师练口语', '同 AI 導師練口語', 'Practise with an AI tutor'),
+  'tutor.homeHint': U('生活场景 · 开口预演 · 模拟体验', '生活場景 · 開口預演 · 模擬體驗', 'Everyday topics · Conversation rehearsal · Demo'),
   'tutor.demo': U('模拟语音体验', '模擬語音體驗', 'Simulated voice preview'),
   'tutor.demoHint': U('当前演示听说流程，不采集麦克风、不录音，也不识别语音或播放声音。话题和回复为示例，尚未接入真实 AI。', '目前示範聽說流程，不使用咪高峰、不錄音，亦不辨識語音或播放聲音。話題同回覆為示例，尚未接入真實 AI。', 'This preview simulates speaking and listening. It does not use your microphone, record, recognise speech or play audio. Topics and replies are samples, not live AI.'),
   'tutor.choose': U('这次想练什么？', '今次想練咩？', 'What would you like to practise?'),

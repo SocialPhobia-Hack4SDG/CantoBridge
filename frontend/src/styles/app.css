@@ -1084,6 +1084,12 @@ button.pill[aria-pressed='true'] {
 }
 
 /* ---------- 首页 / 统计 ---------- */
+.home-practice-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
 .home-action {
   display: flex;
   flex-direction: column;
@@ -2168,7 +2174,7 @@ button.phrase-text { cursor: pointer; }
   .page[data-page='home'] > section { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
   .page[data-page='home'] > section > * { margin: 0; }
   .page[data-page='home'] > section > .muted-note,
-  .page[data-page='home'] > section > .ai-tutor-entry,
+  .page[data-page='home'] > section > .home-practice-actions,
   .page[data-page='home'] > section > .tile-grid,
   .page[data-page='home'] > section > .card:not(.recommend-block) { grid-column: 1 / -1; }
   .recommend-block { min-height: 310px; display: flex; flex-direction: column; gap: 16px; }
@@ -2176,6 +2182,8 @@ button.phrase-text { cursor: pointer; }
   .page[data-page='home'] > section:not(:has(.recommend-block)) > .home-action { grid-column: 1 / -1; }
   .page[data-page='home'] > section > .row-actions { grid-column: 1 / -1; justify-content: flex-end; }
   .home-action { min-height: 310px; padding: 36px; gap: 16px; }
+  .home-practice-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .home-practice-actions > .home-action { min-width: 0; }
   .home-action-title { font-size: 30px; letter-spacing: -.7px; max-width: 420px; }
   .home-action .btn { margin-top: auto; width: auto; padding-inline: 32px; }
   /* 整页内置面板（.sheet-fullscreen）是 position: fixed 的整页覆盖层，虽然和页面内容

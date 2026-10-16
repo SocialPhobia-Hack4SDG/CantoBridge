@@ -134,19 +134,18 @@ export const HomePage = definePage({
     });
     const action = homePrimaryAction({ role, waitingCount: view.data?.waitingCount ?? 0 });
     const hasActivity = Number(progress.conversations) > 0 || Number(progress.totalMinutes) > 0 || history.length > 0;
+    const primaryAction = h(HomeActionCard, {
+      role, headline: t(action.headlineKey), ctaLabel: t(action.ctaKey),
+      badge: action.badge ? t(action.badge.key, action.badge.vars) : null,
+      onStart: () => ctx.navigate(action.to),
+    });
 
     return h(
       'section',
       { class: 'stack' },
       h('p', { class: 'muted-note', text: t('app.slogan') }),
-      h(HomeActionCard, {
-        role,
-        headline: t(action.headlineKey),
-        ctaLabel: t(action.ctaKey),
-        badge: action.badge ? t(action.badge.key, action.badge.vars) : null,
-        onStart: () => ctx.navigate(action.to),
-      }),
-      role === 'learner' ? h('button', { class: 'btn btn-secondary btn-block ai-tutor-entry', type: 'button', onClick: () => ctx.navigate('/tutor') }, t('tutor.entry')) : null,
+      role === 'learner' ? h('div', { class: 'home-practice-actions' }, primaryAction,
+        h(HomeActionCard, { role, className: 'ai-tutor-entry', artIcon: 'star', headline: t('tutor.title'), ctaLabel: t('tutor.entry'), hint: t('tutor.homeHint'), onStart: () => ctx.navigate('/tutor') })) : primaryAction,
       role === 'learner' ? recommendBlock(ctx, view) : null,
       view.error
         ? h(ErrorState, { message: t('state.failed'), retryLabel: t('action.retry'), onRetry: () => ctx.reload() })

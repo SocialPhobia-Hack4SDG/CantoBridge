@@ -5,11 +5,11 @@
 
 import { h, icon } from '../lib/dom.js';
 
-export function HomeActionCard({ role, headline, ctaLabel, badge = null, onStart, hint = null }) {
+export function HomeActionCard({ role, headline, ctaLabel, badge = null, onStart, hint = null, className = null, artIcon = null }) {
   return h(
     'section',
-    { class: ['home-action', 'role-' + role] },
-    h('div', { class: 'home-action-art' }, icon(role === 'buddy' ? 'match' : 'mic', { size: 34 })),
+    { class: ['home-action', 'role-' + role, className] },
+    h('div', { class: 'home-action-art' }, icon(artIcon ?? (role === 'buddy' ? 'match' : 'mic'), { size: 34 })),
     h('h2', { class: 'home-action-title', text: headline }),
     badge ? h('p', { class: 'home-action-badge', text: badge }) : null,
     hint ? h('p', { class: 'home-action-hint', text: hint }) : null,
