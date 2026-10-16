@@ -10,6 +10,14 @@ const css = readFileSync(new URL('../src/styles/app.css', import.meta.url), 'utf
 const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
   .map(match => ({ selector: match[1].replace(/\s+/g, ' ').trim(), body: match[2].trim() }));
 
+test('首页AI导师入口在电脑双列布局中跨满整行，手机仍沿用全宽按钮', () => {
+  const entry = rules.find(rule => rule.selector.split(',').map(selector => selector.trim()).includes(".page[data-page='home'] > section > .ai-tutor-entry"));
+  assert.ok(entry, 'AI导师入口需显式跨列，width:100%只能占满单个格子');
+  assert.match(entry.body, /grid-column:\s*1\s*\/\s*-1/);
+  const block = rules.find(rule => rule.selector === '.btn-block');
+  assert.match(block.body, /width:\s*100%/);
+});
+
 test('「我的」页的桌面栅格规则不会命中整页内置面板', () => {
   // 面板是 position: fixed 的整页覆盖层，却和页面内容一样挂在 .page > section 上。
   // 一旦被栅格规则命中：display:grid + align-content:stretch（网格默认值）会把标题和

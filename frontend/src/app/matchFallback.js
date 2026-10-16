@@ -1,4 +1,4 @@
-export const DEMO_WAIT_MS = 10_000;
+export const DEMO_WAIT_MS = 7_000;
 export const DEMO_ACCEPT_MS = 10_000;
 
 /** One offer per queue session; real matches always take precedence. */

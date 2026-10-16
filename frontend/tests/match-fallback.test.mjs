@@ -17,7 +17,7 @@ async function queued(options = {}) {
 }
 async function tick(ui, ms) { ui.advance(ms); ui.win.tick(1); await flush(); }
 
-test('两身份等满10秒才提示，展示对应演示伙伴；再等10秒自动进房并退出正式队列', async () => {
+test('两身份等满7秒才提示，展示对应演示伙伴；再等10秒自动进房并退出正式队列', async () => {
   for (const role of ['learner', 'buddy']) {
     let leaves = 0;
     const ui = await queued({ role, signalUrl: 'wss://example.test/ws', apiWrapper: base => ({ ...base,
@@ -25,7 +25,7 @@ test('两身份等满10秒才提示，展示对应演示伙伴；再等10秒自�
       getCards: async () => { throw Error('formal room API must not be used'); },
     }) });
     ui.win.__CANTOBRIDGE_DEV__ = false;
-    await tick(ui, 9_000); assert.equal(ui.has('.demo-match-toast'), false);
+    await tick(ui, 6_000); assert.equal(ui.has('.demo-match-toast'), false);
     await tick(ui, 1_000); assert.ok(ui.has('.demo-match-toast'));
     assert.equal(ui.one('.match-toast-count').textContent, '10');
     assert.ok(ui.text().includes(t(role === 'buddy' ? 'demo.learnerName' : 'demo.buddyName')));
@@ -49,24 +49,24 @@ test('两身份等满10秒才提示，展示对应演示伙伴；再等10秒自�
 test('立即接受只退出一次队列，后台页面也能体验房间', async () => {
   let leaves = 0;
   const ui = await queued({ apiWrapper: base => ({ ...base, leaveQueue: async () => { leaves++; return base.leaveQueue(); } }) });
-  await ui.goto('/home'); await tick(ui, 10_000);
+  await ui.goto('/home'); await tick(ui, 7_000);
   const accept = ui.button(t('demo.accept')); accept.click(); accept.click(); await flush();
   assert.equal(ui.win.location.hash, '#/room/demo-preview'); assert.equal(leaves, 1);
 });
 
 test('继续等真人后跨页不重复提示；取消并重新入队可以再收到提示', async () => {
-  const ui = await queued(); await tick(ui, 10_000);
+  const ui = await queued(); await tick(ui, 7_000);
   const joinedAt = ui.store.getState().runtime.queue.joinedAt;
   await ui.clickButton(t('demo.keepWaiting'));
   await ui.goto('/home'); await tick(ui, 60_000); await ui.goto('/match');
   assert.equal(ui.has('.demo-match-toast'), false);
   assert.equal(ui.store.getState().runtime.queue.joinedAt, joinedAt);
-  await ui.api.leaveQueue(); ui.store.startQueue(); await tick(ui, 10_000);
+  await ui.api.leaveQueue(); ui.store.startQueue(); await tick(ui, 7_000);
   assert.ok(ui.has('.demo-match-toast'));
 });
 
 test('提示期间真人请求优先，收起演示提示且到期不进入演示房间', async () => {
-  const ui = await queued(); await tick(ui, 10_000);
+  const ui = await queued(); await tick(ui, 7_000);
   ui.store.receiveMatchRequest({ roomId: 'real-offer', peer: { peerId: 'real-peer', displayName: 'Real' }, expiresAt: ui.store.now() + 30_000 });
   assert.equal(ui.has('.demo-match-toast'), false); assert.ok(ui.text().includes('Real'));
   await tick(ui, 10_000); assert.equal(ui.win.location.hash, '#/match');
@@ -75,7 +75,7 @@ test('提示期间真人请求优先，收起演示提示且到期不进入演�
 
 test('取消匹配或真人已成房会撤销演示倒计时', async () => {
   for (const action of ['cancel', 'room']) {
-    const ui = await queued(); await tick(ui, 10_000);
+    const ui = await queued(); await tick(ui, 7_000);
     if (action === 'cancel') await ui.api.leaveQueue();
     else ui.store.startRoom({ roomId: 'live-room', peer: { peerId: 'real-peer' }, role: 'learner' });
     assert.equal(ui.has('.demo-match-toast'), false);
@@ -86,7 +86,7 @@ test('取消匹配或真人已成房会撤销演示倒计时', async () => {
 test('退出队列失败保留真人匹配并显示失败原因，不自动重试', async () => {
   let leaves = 0;
   const ui = await queued({ apiWrapper: base => ({ ...base, leaveQueue: async () => { leaves++; throw Error('offline'); } }) });
-  await tick(ui, 10_000); await ui.clickButton(t('demo.accept'));
+  await tick(ui, 7_000); await ui.clickButton(t('demo.accept'));
   assert.equal(ui.win.location.hash, '#/match'); assert.ok(ui.store.getState().runtime.queue);
   assert.ok(ui.text().includes(t('demo.enterFailed')));
   await tick(ui, 30_000); assert.equal(leaves, 1);
@@ -95,7 +95,7 @@ test('退出队列失败保留真人匹配并显示失败原因，不自动重�
 test('退出队列期间真人成房时保留真人房间，不覆盖为演示房间', async () => {
   let release;
   const ui = await queued({ apiWrapper: base => ({ ...base, leaveQueue: () => new Promise(resolve => { release = async () => { await base.leaveQueue(); resolve(); }; }) }) });
-  await tick(ui, 10_000); ui.button(t('demo.accept')).click(); await flush();
+  await tick(ui, 7_000); ui.button(t('demo.accept')).click(); await flush();
   ui.store.startRoom({ roomId: 'live-wins', peer: { peerId: 'real-peer' }, role: 'learner' });
   await release(); await flush();
   assert.equal(ui.store.getState().runtime.room.roomId, 'live-wins');
@@ -103,7 +103,7 @@ test('退出队列期间真人成房时保留真人房间，不覆盖为演示�
 });
 
 test('切换界面语言保留倒计时，翻译提示与演示伙伴名字', async () => {
-  const ui = await queued(); await tick(ui, 10_000); await tick(ui, 3_000);
+  const ui = await queued(); await tick(ui, 7_000); await tick(ui, 3_000);
   ui.store.setLocale('en'); await flush();
   assert.ok(ui.text().includes(createTranslator('en')('demo.offerHint')));
   assert.equal(ui.one('.match-toast-count').textContent, '7');

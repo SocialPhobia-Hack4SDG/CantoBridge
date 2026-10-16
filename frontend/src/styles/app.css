@@ -2168,6 +2168,7 @@ button.phrase-text { cursor: pointer; }
   .page[data-page='home'] > section { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
   .page[data-page='home'] > section > * { margin: 0; }
   .page[data-page='home'] > section > .muted-note,
+  .page[data-page='home'] > section > .ai-tutor-entry,
   .page[data-page='home'] > section > .tile-grid,
   .page[data-page='home'] > section > .card:not(.recommend-block) { grid-column: 1 / -1; }
   .recommend-block { min-height: 310px; display: flex; flex-direction: column; gap: 16px; }
