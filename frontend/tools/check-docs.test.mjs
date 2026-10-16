@@ -289,7 +289,7 @@ const ticker = (value) => BT + value + BT;
 
 test('结构性数字写错会被拦下（路由 / 组件 / 文档数量、测试数量声明）', () => {
   const cases = [
-    { name: '路由数量写错', doc: 'README.md', mutate: (text) => text.replace('16 个路由', '99 个路由'), expect: '实际是 16 个路由' },
+    { name: '路由数量写错', doc: 'README.md', mutate: (text) => text.replace('17 个路由', '99 个路由'), expect: '实际是 17 个路由' },
     { name: '文档数量写错', doc: 'README.md', mutate: (text) => text.replace('10 份规划文档', '9 份规划文档'), expect: '实际是 10 份规划文档' },
     { name: '组件数量写错', doc: 'README.md', mutate: (text) => text.replace('38 个组件', '32 个组件'), expect: '实际是 38 个组件' },
     // 变异源用正则而不是写死 `433 个测试`：写死的话，只要真数字涨一次（433 → 441），

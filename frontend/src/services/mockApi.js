@@ -29,6 +29,7 @@ import {
 } from '../lib/logic.js';
 import { leaderboardStats } from '../lib/leaderboard.js';
 import { pickCards, seedFrom } from '../lib/topicPicker.js';
+import { sampleTopicCards, sampleTutorReply } from './tutorSample.js';
 import { FRAMES, LEGACY_FRAME_IDS, ownedFrames } from '../data/frames.js';
 import { ownedAvatars, AVATARS } from '../data/avatars.js';
 import { SHOP_CATALOG } from '../data/shop.js';
@@ -171,6 +172,8 @@ export function createMockApi({ store, sleep, candidates = EMPTY_CANDIDATES } = 
 
   return {
     /* ---------- 账号与资料 ---------- */
+    async generateTopicCards(input) { return respond(sampleTopicCards(input)); },
+    async replyToTutor(input) { return respond(sampleTutorReply(input)); },
     async signIn(role) {
       store.setRole(role);
       return respond({ userId: currentProfile().userId, role });

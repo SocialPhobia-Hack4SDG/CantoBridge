@@ -19,13 +19,13 @@ import {
 
 const FRONTEND = resolve(fileURLToPath(new URL('..', import.meta.url)));
 
-test('代码与文档一致性：16 条路由、38 个组件、16 个页面全部对得上', () => {
+test('代码与文档一致性：17 条路由、38 个组件、17 个页面全部对得上', () => {
   const { errors, stats } = checkFrontend();
   assert.deepEqual(errors, [], '存在不一致：\n' + errors.join('\n'));
-  assert.equal(stats.routeCount, 16);
+  assert.equal(stats.routeCount, 17);
   assert.equal(stats.componentCount, 38);
   assert.equal(stats.themeCount, 5);
-  assert.equal(stats.pageCount, 16);
+  assert.equal(stats.pageCount, 17);
   assert.ok(stats.usedKeyCount > 100);
 });
 
@@ -68,6 +68,7 @@ test('routes.js 的路由顺序与 docs/03 路由表完全一致', () => {
     '/onboarding/profile',
     '/onboarding/privacy',
     '/home',
+    '/tutor',
     '/match',
     '/match/:learnerId',
     '/room/:roomId',
@@ -105,7 +106,7 @@ test('文档里提到的组件和页面都必须真的实现（反向也成立�
   const { collectExports } = await import('../tools/check-ui.mjs');
   const { components, pages } = collectExports(FRONTEND);
   assert.equal(components.length, 38);
-  assert.equal(pages.length, 16);
+  assert.equal(pages.length, 17);
   assert.ok(components.every((item) => item.file.startsWith('src/components/')));
   assert.ok(pages.every((item) => item.file.startsWith('src/pages/')));
 });

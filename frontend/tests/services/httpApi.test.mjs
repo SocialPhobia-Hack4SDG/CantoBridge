@@ -1,5 +1,5 @@
 /**
- * httpApi：40 个方法与 mock 同名同参，真接口走 HTTP、未实现的降级到 mock，
+ * httpApi：42 个方法与 mock 同名同参，真接口走 HTTP、未实现的降级到 mock，
  * 并且**写成功之后照旧同步 store**（页面代码一行都不用改）。
  *
  * 全程不联网：假 fetch 回放后端真实响应片段。
@@ -112,14 +112,14 @@ test('通话档位默认值：真后端档位把出厂的 sim 升到 remote，mo
   }
 });
 
-test('方法名同构：httpApi 与 mockApi 的键集合完全一致（40 个）', () => {
+test('方法名同构：httpApi 与 mockApi 的键集合完全一致（42 个）', () => {
   const store = createStore({ storage: createMemoryStorage() });
   const mock = createMockApi({ store });
   const http = createHttpApi({ baseUrl: BASE, store, fallback: mock, fetchImpl: createFetchStub(() => ok({})) });
 
   assert.deepEqual(Object.keys(http).sort(), Object.keys(mock).sort());
-  assert.equal(Object.keys(mock).length, 40, '契约钉住的 mock 方法数是 40');
-  assert.equal(HTTP_METHODS.length + FALLBACK_METHODS.length, 40, '两半加起来必须正好 40');
+  assert.equal(Object.keys(mock).length, 42, '契约钉住的 mock 方法数是 42');
+  assert.equal(HTTP_METHODS.length + FALLBACK_METHODS.length, 42, '两半加起来必须正好 42');
   assert.deepEqual(
     [...HTTP_METHODS, ...FALLBACK_METHODS].sort(),
     Object.keys(mock).sort(),

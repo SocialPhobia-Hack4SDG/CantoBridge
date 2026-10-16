@@ -41,7 +41,7 @@ test('真实文档：属性汇总与接口契约零错误', () => {
   assert.equal(stats.runtimeFieldCount, 7);
   assert.equal(stats.vocabularyCount, VOCABULARY_EXPORTS.length);
   assert.equal(stats.achievementCount, 14);
-  assert.equal(stats.mockMethodCount, 40);
+  assert.equal(stats.mockMethodCount, 42);
   assert.ok(stats.jsonBlockCount >= 15, '接口契约应当给出足够多的字段级示例');
 });
 
@@ -99,7 +99,7 @@ test('extractTokens 只认反引号里的内容', () => {
 
 test('mockMethodNames 与服务层真实暴露的方法一一对应', () => {
   const names = mockMethodNames();
-  assert.equal(names.length, 40);
+  assert.equal(names.length, 42);
   assert.ok(names.includes('getMe'));
   assert.ok(names.includes('sendBuddyRequest'));
   assert.ok(names.includes('getIceServers'));

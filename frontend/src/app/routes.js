@@ -10,6 +10,7 @@ import { LandingPage } from '../pages/landing.js';
 import { RegisterPage } from '../pages/register.js';
 import { RoleSelectPage, ProfileSetupPage, PrivacySetupPage } from '../pages/onboarding.js';
 import { HomePage } from '../pages/home.js';
+import { AiTutorPage } from '../pages/tutor.js';
 import { MatchPage, PeerPreviewPage } from '../pages/match.js';
 import { ChatRoomPage, SessionSummaryPage } from '../pages/room.js';
 import { ProfilePage } from '../pages/me.js';
@@ -28,6 +29,7 @@ export const ROUTES = [
   { path: '/onboarding/profile', name: 'profile', page: ProfileSetupPage, titleKey: 'setup.title', guard: null, nav: null, back: true, immersive: false, step: 2, stepKey: 'setup.step' },
   { path: '/onboarding/privacy', name: 'privacy', page: PrivacySetupPage, titleKey: 'privacy.title', guard: null, nav: null, back: true, immersive: false, step: 3, stepKey: 'privacy.step' },
   { path: '/home', name: 'home', page: HomePage, titleKey: 'app.name', guard: 'onboarded', nav: 'home', back: false, immersive: false },
+  { path: '/tutor', name: 'tutor', page: AiTutorPage, titleKey: 'tutor.title', guard: 'learner', nav: null, back: true, immersive: false, backLabelKey: 'action.back', backTo: '/home' },
   { path: '/match', name: 'match', page: MatchPage, titleKey: 'match.title', guard: 'onboarded', nav: 'match', back: false, immersive: false },
   { path: '/match/:learnerId', name: 'peerPreview', page: PeerPreviewPage, titleKey: 'preview.title', guard: 'buddy', nav: null, back: true, immersive: false, backLabelKey: 'action.back', backTo: '/match' },
   { path: '/room/:roomId', name: 'room', page: ChatRoomPage, titleKey: 'room.title', guard: 'room', nav: null, back: false, immersive: true },

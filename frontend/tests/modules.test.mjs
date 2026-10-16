@@ -36,10 +36,10 @@ for (const modulePath of MODULES) {
   });
 }
 
-test('路由表：16 条路由、页面组件齐全、兜底在最后', async () => {
+test('路由表：17 条路由、页面组件齐全、兜底在最后', async () => {
   installDom();
   const { ROUTES } = await import('../src/app/routes.js');
-  assert.equal(ROUTES.length, 16);
+  assert.equal(ROUTES.length, 17);
   for (const route of ROUTES) {
     assert.ok(route.path.startsWith('/') || route.path === '*');
     assert.equal(typeof route.page.render, 'function', route.path + ' 缺少 render');
@@ -59,6 +59,7 @@ test('路由守卫：每条路由的 guard 与 docs/03 的「访问身份」一�
     '/onboarding/profile': null,
     '/onboarding/privacy': null,
     '/home': 'onboarded',
+    '/tutor': 'learner',
     '/match': 'onboarded',
     '/match/:learnerId': 'buddy',
     '/room/:roomId': 'room',

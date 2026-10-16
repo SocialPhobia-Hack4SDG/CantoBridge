@@ -146,6 +146,7 @@ export const HomePage = definePage({
         badge: action.badge ? t(action.badge.key, action.badge.vars) : null,
         onStart: () => ctx.navigate(action.to),
       }),
+      role === 'learner' ? h('button', { class: 'btn btn-secondary btn-block ai-tutor-entry', type: 'button', onClick: () => ctx.navigate('/tutor') }, t('tutor.entry')) : null,
       role === 'learner' ? recommendBlock(ctx, view) : null,
       view.error
         ? h(ErrorState, { message: t('state.failed'), retryLabel: t('action.retry'), onRetry: () => ctx.reload() })

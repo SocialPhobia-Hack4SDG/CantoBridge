@@ -20,6 +20,7 @@ flowchart TD
     ProfileSetupPage --> PrivacySetupPage
     PrivacySetupPage --> HomePage
     HomePage --> MatchPage
+    HomePage --> AiTutorPage
     MatchPage --> PeerPreviewPage
     PeerPreviewPage --> ChatRoomPage
     ChatRoomPage --> SessionSummaryPage
@@ -41,6 +42,7 @@ flowchart TD
 | `/onboarding/profile` | `ProfileSetupPage` | 两种身份 | P0 | 母语、粤语水平、兴趣与身份标签 |
 | `/onboarding/privacy` | `PrivacySetupPage` | 两种身份 | P0 | 资料可见范围与实时预览 |
 | `/home` | `HomePage` | 两种身份 | P0 | 首页：按当前身份给唯一主 CTA，配轻量统计与最近记录 |
+| `/tutor` | `AiTutorPage` | 粤语学习者 | P1 | 独立AI导师：香港生活与真人交流预演，当前为无录音的模拟语音体验 |
 | `/match` | `MatchPage` | 两种身份 | P0 | 匹配大厅：学习者等待视图 + 母语者浏览挑选视图 |
 | `/match/:learnerId` | `PeerPreviewPage` | 粤语母语者 | P0 | 点开某位学习者后的资料预览与「开始通话」 |
 | `/room/:roomId` | `ChatRoomPage` | 两种身份 | P0 | 一对一会话房间：语音舞台 + 话题卡 |
@@ -552,6 +554,16 @@ onboarding 三页顶部的一条三段式进度条，当前段用主色（Jade�
   绝不跳走，否则用户会以为是页面坏了。
 
 **组件：** `AppShell`、`FallbackBanner`
+
+### 5.17 AI导师 — 路由 `/tutor`
+
+学习者首页只新增一个入口，不改变原有主按钮、导航或房间布局。独立页面复用 `CallStage` 和 `TopicCard`，提供香港生活练习与真人交流前预演两条目标，沿用资料兴趣并允许临时选择程度。当前只模拟听说状态，不使用麦克风、录音、语音识别或声音播放；页面始终明确标注。发言是卡片中的示例句，回复经GenAI示例接口返回，不作为实际纠错或学习评估。
+
+可暂停模拟麦克风、打断回应、换话题、展开提示和示例字幕；结束后回顾示例表达或前往匹配大厅，不自动排队、不分享练习内容、不计正式积分或保存聊天。已有正式队列或房间时禁止开始，避免两个会话同时运行。
+
+- 加载中：生成话题时禁用重复操作并显示加载文案；等待回复时显示模拟思考状态。
+- 空：未开始时展示目标与场景选择；无有效话题卡时视为加载失败，不进入空房间。
+- 失败：卡片失败可重试，回复失败保留当前卡片可重试或结束；离开页面取消模拟计时并忽略迟到结果。
 
 ## 6. 关键流程图
 

@@ -405,7 +405,7 @@ flowchart TD
 | `/api/genai/topic-cards` | POST | Bearer | 是 | `learnerInterests`、`buddyInterests`、`cantoneseLevel`、`count`、`requestId` | `mode`、`provider`、`model`、`cards`、`context` | 400 `bad_request`、401 `not_authorized`、500 `internal` |
 | `/api/genai/tutor/reply` | POST | Bearer | 是 | `text`、`currentCard`、`requestId` | `mode`、`provider`、`model`、`reply`、`suggestions`、`cardId` | 400 `bad_request`、401 `not_authorized`、500 `internal` |
 
-当前后端仅提供 `mode: "mock"`、`provider: "sample"`、`model: null` 的示例响应，不调用外部模型、不产生API费用、不接语音、不改现有UI。完整字段限制、调用示例及后续提供方适配方式见仓库中的 `backend/docs/genai.md`。这两个接口不属于当前前端 mock/http 方法集合，不要求新增页面调用。
+当前后端仅提供 `mode: "mock"`、`provider: "sample"`、`model: null` 的示例响应，不调用外部模型、不产生API费用、不接语音。完整字段限制、调用示例及后续提供方适配方式见仓库中的 `backend/docs/genai.md`。前端独立导师页面通过 `generateTopicCards` 和 `replyToTutor` 调用；纯mock模式使用同格式的本地示例。未启用麦克风、录音、语音识别或声音播放。
 
 ### 4.1 账号与鉴权
 
@@ -852,6 +852,8 @@ flowchart TD
 
 | mock 方法 | 接口 | 说明 |
 | --- | --- | --- |
+| `generateTopicCards` | `/api/genai/topic-cards` | 导师预览示例卡片，返回明确mock来源 |
+| `replyToTutor` | `/api/genai/tutor/reply` | 导师预览示例回复，非真实语音识别或纠错 |
 | `signIn` | `/api/auth/session` | 一键进入，写 `role`；真实实现还要带 `deviceId`（账号的钥匙） |
 | `signInWithCredentials` | `/api/auth/login` | APK 路线的正式登录 |
 | `refreshToken` | `/api/auth/refresh` | 令牌续期 |

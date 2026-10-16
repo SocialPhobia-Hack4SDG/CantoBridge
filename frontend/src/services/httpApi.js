@@ -29,6 +29,8 @@ import {
 
 /** 走真后端的 35 个方法（后端已实现 32 个契约端点 + 3 个契约外的演示口子）。 */
 export const HTTP_METHODS = [
+  'generateTopicCards',
+  'replyToTutor',
   'signIn',
   'signOut',
   'getMe',
@@ -175,6 +177,12 @@ export function createHttpApi({
 
   return {
     /* ---------------- 账号 / 资料 / 设置 ---------------- */
+    async generateTopicCards(input) {
+      return http.request('POST', '/api/genai/topic-cards', { body: input });
+    },
+    async replyToTutor(input) {
+      return http.request('POST', '/api/genai/tutor/reply', { body: input });
+    },
 
     /**
      * 一键进入：拿令牌 → 存起来 → 切身份。返回与 mock 同形状的 `{userId, role}`。

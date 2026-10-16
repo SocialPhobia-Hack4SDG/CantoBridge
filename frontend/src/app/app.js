@@ -339,8 +339,9 @@ export function createApp({
   }
 
   function guardRedirect(route, state, path, params) {
+    if (route.guard === 'learner' && state.role !== 'learner') return { to: '/home' };
     if (route.guard === 'buddy' && state.role !== 'buddy') return { to: '/match' };
-    if (route.guard === 'onboarded') {
+    if (route.guard === 'onboarded' || route.guard === 'learner') {
       const profile = state.role === 'buddy' ? state.buddyProfile : state.learnerProfile;
       if (!profile || profile.onboarded !== true) return { to: '/onboarding/role' };
     }
